@@ -1,81 +1,57 @@
-# Devpost Submission — Drafted Fields
+# Devpost Submission Details — LifeLens
 
-## Project Description
-
-**Second Brain** is a conversational decision-reasoning advisor for students and early professionals weighing major life paths — specifically Graduate School selection, Job Offers, and Startup decisions. 
-
-Unlike traditional platforms that immediately dump lists of pros and cons, Second Brain takes the user through a structured **three-phase guided discovery**:
-1. **Decision Selector:** The user selects their specific situation (Grad School, Job, or Startup).
-2. **Context-Specific Intake:** A dynamic form captures essential background parameters (location, runway, potential options, risk tolerance, etc.).
-3. **Conversational Advisor & Dossier:** An interactive chat session where the AI acts as a dedicated advisor (Academic, Career, or Startup Advisor). The advisor asks one question at a time to explore details (reputation, location, lifestyle, post-grad visa rules). After approximately 4 turns, the AI synthesizes a structured **Dossier/Analysis** inline, showing short-term and long-term projections, risk assessments, assumptions, and confidence ratings.
-
-If the user is still confused or distressed, the tool connects them directly to localized, real-world counselors (such as iCall in India, UCAS in the UK, and College Board in the US) based on their country.
-
-The tool never tells the user what to choose; it makes the underlying structure of the decision visible so that the human choice remains fully informed.
+Copy and paste the sections below directly into your Devpost submission fields:
 
 ---
 
-## AI Architecture Explanation
+## 1. Project Header Info
 
-### 1. Inputs
-- **Phase 1 Select:** Captures the category of the decision (`grad_school`, `job`, or `startup`).
-- **Phase 2 Context Intake:** Custom form fields tailored to the decision type:
-  - *Grad School:* Country, stream/program, colleges list, financial situation, runway (months), location flexibility.
-  - *Job Offer:* Country/city, role/title, companies/offers, current situation, runway (months), dependents.
-  - *Startup:* Country/market, startup description, user's role, funding stage, runway (months), risk tolerance (1–5).
-- **Phase 3 Chat:** The intake form details are formatted into an invisible context bootstrap message. Subsequent inputs are standard conversational text responses from the user.
-
-### 2. AI Capability Used & Prompts
-- We utilize a swappable LLM client running **Groq** (`llama-3.3-70b-versatile`) as the primary inference provider (with OpenAI `gpt-4o-mini` and Anthropic `claude-sonnet-4-6` fallback integrations).
-- The system prompt dictates strict behavioral guardrails:
-  - Maintain a supportive, objective, and warm tone.
-  - Guide the user by asking **exactly one focused question** per message.
-  - Evaluate options honestly using embedded world knowledge (e.g. university rankings, industry compensation standards, startup success probabilities).
-  - Enforce a **no-recommendation guardrail** (refrain from directing the user on what choice to make).
-  - Format every reply as a strict, single JSON object containing: `message`, `is_analysis` (boolean), `analysis` (the final dossier JSON schema once 4 turns are complete), and `offer_counselor` (boolean).
-
-### 3. Processing
-- The Node/Express backend provides a stateless `/api/chat` route. The client sends the full conversation history to the backend on each turn.
-- The backend passes the messages list and the matching system prompt to the LLM.
-- The backend parses the LLM's response. If the LLM generates markdown fences or text wrappers, a robust parser sanitizes it.
-- If the response includes `is_analysis: true` or `offer_counselor: true`, the backend automatically resolves and appends counselor reference details based on the user's input country.
-
-### 4. Outputs
-- **Interactive Chat Log:** Renders a clean chat interface with typing animation indicators.
-- **Dossier Card:** If `is_analysis` is true, an inline dossier is revealed inside the assistant's final response:
-  - *Summary:* A concise overview of the student's primary friction points.
-  - *Options Breakdown:* Columns listing short-term outcomes, long-term projections, key risks, assumptions, confidence stamps, and advisor reputation notes.
-  - *Hidden Tradeoffs:* Unmentioned considerations that the user should factor in.
-  - *Branch Questions:* Core "what if" prompts worth sitting with.
-- **Counselor Card:** Renders contact information (name, phone, hours, website, type) of a professional counseling service corresponding to the user's location.
+*   **Project Name:** LifeLens
+*   **Tagline:** An interactive, conversational life-decision advisor that structures complex choices so that the human decision remains fully informed.
 
 ---
 
-## Human-in-the-Loop Design
+## 2. About the Project (Project Story)
 
-- **The decision the AI does not make:** The system prompt explicitly forbids recommendation language (e.g., "you should choose," "I recommend," "the best option is"). Projections use conditional framing: *"If your priority is X, Option A tends to offer..."*
-- **Counselor fallback:** Generative AI is excellent for structuring thoughts, but it is not a therapist or a professional mental health counselor. If the AI detects distress or if the user is still confused after the analysis, the app surfaces a direct link and phone line to a real human academic/career counselor in their country.
-- **Final Decision Reflection:** The user is prompted at the end to write down their final thoughts in their own words. The output of the advisor is an aid to clarity, not a final choice generator.
+### Inspiration
+Choosing a graduate program, evaluating a startup idea, or deciding between competing job offers are some of the most high-stakes, stressful decisions students and early-career professionals make. Today’s internet is filled with immediate, generic lists of pros and cons, which often increase anxiety rather than offering clarity. 
+
+We were inspired to build **LifeLens**—a tool that does not tell you *what* to choose, but instead acts as a structured mirror. By asking one thoughtful question at a time and mapping your answers into an objective, data-driven Dossier, LifeLens makes the underlying trade-offs of your choices visible, preserving your agency.
+
+### What it does
+LifeLens takes the user through a clean, 3-phase guided discovery flow:
+1.  **Decision Selector:** Choose between three major paths: Graduate School, Job Offer, or Startup.
+2.  **Context-Specific Intake:** A dynamic form with staggered animations, interactive progress tracking, and custom dropdowns captures key location, career, and financial parameters.
+3.  **Conversational Advisor & Dossier:** An interactive chat session (powered by AI) explores your choices, asking exactly one question at a time. After approximately 4 turns, the AI compiles a structured **Dossier** inline, detailing short/long-term projections, hidden tradeoffs, branch questions, and a confidence rating.
+
+If the advisor detects distress or if you remain deeply confused, it triggers a **Responsible AI Counselor Card**, connecting you directly with real-world human counseling (UCAS in the UK, College Board in the US, iCall in India) based on your location.
+
+### How we built it
+*   **Frontend:** Built with **React** and **Vite** for lightning-fast loads. We designed a premium aesthetic using pure **Vanilla CSS**, integrating custom animations, theme-aware spring dropdown selectors, and auto-growing textareas.
+*   **Backend:** A **Node.js** and **Express** API handles stateless session compilation, LLM system prompt wrapping, and regional counselor matching.
+*   **Inference:** Powered by a swappable LLM client running **Groq (Llama 3.3 70B)** for blazing-fast inference, with fallback support for **OpenAI (GPT-4o-Mini)** and **Anthropic (Claude 3.5 Sonnet)**.
+*   **Deployment:** Fully deployed on **Vercel** as a multi-service monorepo using unified service routing.
+
+### Challenges we faced
+*   **Stateless Chat Integrity:** Implementing multi-turn JSON-structured conversational steps in a stateless REST API required carefully bootstrapping the intake parameters into the hidden message history on each call.
+*   **Sibling Stacking Contexts:** Handling absolute dropdown overlays in a highly animated form created z-index clipping issues. We resolved this by elevating parent focus contexts (`:focus-within` and `:has(.open)`) dynamically.
+*   **Regional Dynamic Lookup:** Implementing country-sensitive placeholder text and preserving the full master competitive exam database (marking degree matches as "Best Match" without hiding other options) required designing custom React filtering logic.
+
+### What we learned
+We learned how to design human-in-the-loop AI applications that prioritize user agency rather than generating decisions for them. We also gained deep experience configuring polyglot/multi-service monorepos on Vercel using `vercel.json` routing.
+
+### What's next for LifeLens
+We plan to integrate live salary benchmarking APIs, expand real-time college database integrations, and partner with university wellness centers to directly embed human advisor bookings inside the counselor fallback system.
 
 ---
 
-## Responsible AI Guardrails & Mitigations
+## 3. Built With
 
-1. **Confidence Downgrading:** The confidence stamp (`low`, `medium`, `high`) is calculated by the advisor model based on input completeness. If details are missing, the confidence is set to `low`.
-2. **Fixed Code-Enforced Disclaimers:** Disclaimers warning that the projections are structured possibilities (not predictions) are hardcoded into the frontend and backend, preventing the LLM from omitting them.
-3. **Counselor Hand-off:** Automatically triggers when the student expresses feeling overwhelmed or distressed, connecting them to actual human support lines (e.g., iCall in India, UCAS in the UK, College Board in the US).
+`React.js`, `Vite`, `Node.js`, `Express.js`, `Groq API`, `Llama-3.3-70b-versatile`, `OpenAI API`, `GPT-4o-Mini`, `Claude-3.5-Sonnet`, `Vercel`, `Vanilla CSS`, `Git`, `Mermaid.js`
 
 ---
 
-## Data Disclosure
+## 4. "Try it out" Links
 
-- Second Brain does not store, log, or reuse user data. Inputs are processed live during the single session and discarded. No user-identifying data is transmitted.
-
----
-
-## Tools Used
-
-- **Inference Models:** Groq (`llama-3.3-70b-versatile`), OpenAI (`gpt-4o-mini`), and Anthropic (`claude-sonnet-4-6`). Groq is the active provider for the demo environment.
-- **Frontend Stack:** React + Vite, styled using premium Vanilla CSS featuring fluid grids, dark mode glassmorphism variables, and keyframe bounce animations.
-- **Backend Stack:** Node.js + Express.
-- **AI Coding Assistance:** Scaffolding done with Claude (Anthropic). Google Antigravity was utilized for final handoff, environment variable troubleshooting (diagnosing an ESM module loading order issue with `dotenv`), adding multi-turn stateless chat endpoints, creating the counselor lookup module, and implementing the multi-step React frontend app flow.
+*   **GitHub Repository:** https://github.com/adityapathak-dev/LIfeLens.git
+*   **Demo URL:** *(Paste your Vercel deployment URL here)*
