@@ -1,6 +1,6 @@
 # Devpost Submission Details — LifeLens
 
-Copy and paste the sections below directly into your Devpost submission fields:
+Copy and paste the sections below directly into your Devpost submission fields. The responses are written in a clean, natural developer voice.
 
 ---
 
@@ -53,5 +53,28 @@ We plan to integrate live salary benchmarking APIs, expand real-time college dat
 
 ## 4. "Try it out" Links
 
-*   **GitHub Repository:** https://github.com/adityapathak-dev/LIfeLens.git
+*   **GitHub Repository URL:** https://github.com/adityapathak-dev/LIfeLens.git
 *   **Demo URL:** *(Paste your Vercel deployment URL here)*
+
+---
+
+## 5. Additional AI Questions & Guardrails
+
+### AI Tools Used
+We used the Groq API running the Llama-3.3-70b-versatile model as our main inference engine because of its incredibly fast response times and generous free tier. For development flexibility, we also coded fallbacks for the OpenAI API (GPT-4o-Mini) and Anthropic API (Claude 3.5 Sonnet). On the coding side, we scaffolding the initial app structure using Claude 3.5 Sonnet, and utilized Google Antigravity to help us write the custom CSS animations, troubleshoot an Express ESM module loading issue, and wire up the Git repository settings. All API endpoints and coding aids were accessed using standard free or pro developer accounts.
+
+### Data Sources
+The application uses a mix of static data and pre-trained LLM parameters. We constructed a custom master list of international competitive entrance exams that maps specific degrees to their eligibility requirements. We also compiled a counselor database linking users in India, the US, and the UK with physical counseling hotlines and portals like iCall, the College Board, and UCAS. For university ranks, startup valuations, and career benchmarks, we leverage the LLM’s internal pre-trained world knowledge. No personal user data is collected, stored, or sent to external databases.
+
+### AI Architecture Explanation
+Our architecture splits data processing between a lightweight client and a stateless Node.js server.
+*   **Inputs:** The user's intake details (such as current runway, targeted degrees or jobs, location, and risk metrics) are passed to the server along with the active chat log.
+*   **AI Capability:** We utilize generative LLM prompting configured to enforce strict guardrails, ensuring the AI asks only one question at a time and formats its responses in a structured JSON schema.
+*   **Processing:** The backend routes these payloads to Groq or the fallback clients. If the user indicates distress or confusion, the backend automatically attaches localized counseling directories to the response.
+*   **Outputs:** The client parses the JSON response to display a live chat stream, compile the interactive Decision Dossier showing tradeoffs and assumptions, or reveal counselor cards.
+
+### Human-in-the-Loop Decision
+LifeLens is built on the philosophy that AI should assist thinking, not replace it. Because of this, the AI is strictly prohibited from recommending a final decision or telling the user what to choose. Instead, the final analysis leaves the choice completely open, framing options conditionally (e.g., "If your priority is financial security, Option A represents..."). The user is prompted to sit with the tradeoffs and type their ultimate choice in their own words. Choosing a career or college involves subjective, personal, and family values that an AI model cannot feel or weigh.
+
+### Responsible AI Guardrail
+A primary risk we identified was user over-reliance, where a student might treat the AI’s career or financial projections as absolute certainties rather than hypothetical possibilities. We mitigated this by building two direct guardrails. First, we hardcoded non-removable disclaimers into the interface explaining that the projections are possibilities, not predictions. Second, we built a dynamic "Confidence Stamp" that ranks the analysis quality (low, medium, high) based on how complete the user's input data is. If inputs are missing, the AI flags the dossier as "low confidence" and explicitly prompts the user to seek human counseling.
