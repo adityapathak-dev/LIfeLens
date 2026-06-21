@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import ResumeChecker from "./ResumeChecker";
 import { discoverExams } from "./api";
-import IdeaMeter from "./IdeaMeter";
 import CountrySelect from "./CountrySelect";
 import DegreeSelect from "./DegreeSelect";
 
@@ -85,7 +84,7 @@ export default function ContextIntake({ decisionType, onSubmit, onBack }) {
     onSubmit(form);
   }
 
-  const showTabs = decisionType === "job" || decisionType === "startup";
+  const showTabs = decisionType === "job";
   const keys = FIELD_KEYS[decisionType] || [];
   const filled = countFilled(form, keys);
   const pct = keys.length > 0 ? Math.round((filled / keys.length) * 100) : 0;
@@ -103,14 +102,14 @@ export default function ContextIntake({ decisionType, onSubmit, onBack }) {
             className={`intake-tab-btn ${activeTab === "advisor" ? "active" : ""}`}
             onClick={() => setActiveTab("advisor")}
           >
-            {decisionType === "job" ? "💼 Section A: Job Advisor" : "🚀 Section A: Startup Advisor"}
+            💼 Section A: Job Advisor
           </button>
           <button
             type="button"
-            className={`intake-tab-btn ${activeTab === "ats" || activeTab === "evaluator" ? "active" : ""}`}
-            onClick={() => setActiveTab(decisionType === "job" ? "ats" : "evaluator")}
+            className={`intake-tab-btn ${activeTab === "ats" ? "active" : ""}`}
+            onClick={() => setActiveTab("ats")}
           >
-            {decisionType === "job" ? "⚡ Section B: Resume ATS Checker" : "💡 Section B: Startup Evaluator"}
+            ⚡ Section B: Resume ATS Checker
           </button>
         </div>
       )}
@@ -131,14 +130,8 @@ export default function ContextIntake({ decisionType, onSubmit, onBack }) {
         </div>
       )}
 
-      {decisionType === "startup" && activeTab === "evaluator" && (
-        <div className="intake-card fade-in">
-          <IdeaMeter onBack={() => setActiveTab("advisor")} onReset={onBack} />
-        </div>
-      )}
-
       {/* SECTION A Views / Grad School View */}
-      {(activeTab === "advisor" || decisionType === "grad_school") && (
+      {(activeTab === "advisor" || decisionType === "grad_school" || decisionType === "startup") && (
         <div className="intake-card fade-in">
           <p className="intake-eyebrow">{DECISION_LABELS[decisionType]}</p>
           <h2 className="intake-title">Tell me about your situation</h2>
