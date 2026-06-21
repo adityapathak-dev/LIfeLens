@@ -1,60 +1,128 @@
-# Second Brain — Conversational Life Decision Advisor
+# LifeLens — Conversational Life Decision Advisor
 
-Second Brain is a conversational decision-reasoning advisor for students and early professionals weighing major life paths — specifically Graduate School selection, Job Offers, and Startup decisions. It guides users through an interactive, multi-turn exploration of details (reputation, location, lifestyle, post-grad visa rules), before outputting a structured Dossier of short/long term outcomes, risks, assumptions, and connecting them to professional counselors.
+> **Structuring complex choices so that the human decision remains fully informed.**
 
-## Run the Application
+**LifeLens** (formerly *Second Brain*) is a conversational decision-reasoning advisor built for students and early professionals weighing major life paths. Instead of immediately dumping simplistic pros and cons, LifeLens guides users through an interactive, multi-turn exploration of critical details (prestige, financial runway, lifestyle preferences, post-grad visa regulations) before synthesising a structured **Dossier/Analysis** inline and connecting them with professional counselors.
 
-### 1. Backend Setup
-```bash
-cd backend
-npm install
-cp .env.example .env
-# Edit .env and configure your keys (Groq is recommended & configured for free-tier usage)
-npm start
-```
-Runs on `http://localhost:4000`.
-
-### 2. Frontend Setup
-```bash
-cd frontend
-npm install
-npm run dev
-```
-Runs on `http://localhost:5173` (or `5174`), proxies `/api` requests to the backend.
+It offers dedicated paths for three major decision categories:
+*   🎓 **Graduate School** (University shortlists, degree goals, financial runway)
+*   💼 **Job Offer** (Role evaluations, compensation packaging, skills matching)
+*   🚀 **Startup** (Idea viability checks, sector analysis, risk tolerance)
 
 ---
 
-## Code Architecture & Key Files
+## 🏗️ System Architecture
 
-- **`backend/src/chatPrompts.js`** — System prompts for each decision category (`grad_school`, `job`, `startup`). Dictates the conversation approach (one question at a time) and the strict output JSON schema.
-- **`backend/src/chatRoute.js`** — The stateless `/api/chat` Express route. Handles chat state, executes LLM calls, parses JSON responses, and attaches localized counselor contact details.
-- **`backend/src/counselors.js`** — Country-to-counselor lookup mapping (e.g. iCall for India/defaults, UCAS for the UK, College Board for the US).
-- **`backend/src/llmClient.js`** — Swappable LLM wrapper client supporting Groq, OpenAI, and Anthropic providers.
-- **`frontend/src/App.jsx`** — Main React entry point coordinating the 3-phase flow (`select` → `intake` → `chat`).
-- **`frontend/src/ChatAdvisor.jsx`** — Conversational chat interface displaying interactive message logs, inline Dossiers, and counselor reference cards.
-- **`frontend/src/ContextIntake.jsx`** — Dynamic form capturing customized context depending on the selected decision type.
-- **`frontend/src/styles.css`** — Premium styling with responsive layouts, interactive elements, custom card animations, and typing bubbles.
-- **`docs/DEVPOST_SUBMISSION_DRAFT.md`** — Completed field templates for the final Hackathon submission.
+```mermaid
+flowchart TD
+    subgraph Client [React Frontend + Vite]
+        A[Decision Selector] --> B[Dynamic Context Intake]
+        B -->|Staggered Load & Progress Bar| C[Interactive Chat Interface]
+        C -->|Dossier Display| D[Structured Analysis Dossier]
+        C -->|Distress Detection| E[Counselor Handoff Card]
+    end
+
+    subgraph Server [Node.js + Express]
+        F[stateless /api/chat Route]
+        G[Real-time Exam Discovery /api/exams]
+        H[Idea Meter /api/idea-meter]
+        I[Resume ATS Evaluator /api/resume]
+    end
+
+    subgraph LLM_Client [Swappable Inference Clients]
+        J[Groq Llama 3.3 70B]
+        K[OpenAI GPT-4o-Mini]
+        L[Anthropic Claude 3.5 Sonnet]
+    end
+
+    Client -->|User Context + Chat History| Server
+    Server -->|Context Bootstrap + Guardrails| LLM_Client
+    LLM_Client -->|Structured JSON Response| Server
+    Server -->|Sanitized JSON Response| Client
+```
 
 ---
 
-## Quick API Test (Using curl)
+## ✨ Key Features
 
-You can verify the backend API is working directly from the command line:
+### 1. Merged Premium UI/UX
+*   **Staggered Entrance Animations:** Inputs slide up with staggered fade-in sequences on mount for a fluid user experience.
+*   **Dynamic Progress Tracking:** Sequential progress bars show filled/total inputs specific to the active decision path in real-time.
+*   **Auto-Growing Textareas:** Text areas (Colleges, Companies, Description, and Skills) grow dynamically to fit text, eliminating scrollbars.
+*   **Theme-Aware Custom Selects:** Dropdowns are backed by custom React select elements with smooth spring popovers and click-outside close handlers.
+
+### 2. Intelligent Data Validations
+*   **Real-time Exam Discovery:** Dynamic lookup based on selected country and target degree (e.g., matching JEE/BITSAT for B.Tech in India, SAT/GRE in the USA).
+*   **Score Bounds Validation:** Sanitizes scores/ranks and displays instant feedback if scores are out of bounds.
+*   **Preserved Master Exam Database:** Degree selection recommends specific exams (flagging them as "Best Match") without hiding others.
+
+### 3. Human-in-the-Loop & Safety Guardrails
+*   **No-Recommendation Guardrail:** The AI is strictly barred from telling you what to choose; it makes the tradeoffs visible using conditional framing.
+*   **Distress Handoff:** Instantly connects the user to professional, localized academic or career counselors (UCAS in the UK, College Board in the US, iCall in India).
+*   **Confidence Stamp:** Downgrades the analysis rating (`low`/`medium`/`high`) if crucial details are left empty.
+
+---
+
+## 📂 Project Structure
 
 ```bash
-curl -X POST http://localhost:4000/api/chat \
-  -H "Content-Type: application/json" \
-  -d '{
-    "decision_type": "grad_school",
-    "history": [
-      {
-        "role": "user",
-        "content": "I am trying to decide on graduate school.\nCountry: India\nStream / Program: Computer Science\nColleges I am considering: IIT Bombay, BITS Pilani\nFinancial situation: student-loan"
-      }
-    ],
-    "country": "India"
-  }'
+├── backend/
+│   ├── src/
+│   │   ├── chatPrompts.js      # System instructions for each decision path
+│   │   ├── chatRoute.js        # Stateless Express chat endpoint
+│   │   ├── counselors.js       # Country-to-counselor lookup directory
+│   │   ├── examDatabase.js     # Master competitive exam dataset
+│   │   ├── examDiscoveryRoute.js # Real-time exam lookup & recommendation logic
+│   │   ├── llmClient.js        # Swappable LLM clients (Groq/OpenAI/Anthropic)
+│   │   └── server.js           # Server initializer (Runs on port 4000)
+├── frontend/
+│   ├── src/
+│   │   ├── App.jsx             # Main React entry point
+│   │   ├── ChatAdvisor.jsx     # Multi-turn chat & dossier interface
+│   │   ├── ContextIntake.jsx   # Staggered intake forms & progress bars
+│   │   ├── CountrySelect.jsx   # Custom country autocomplete dropdown
+│   │   ├── DegreeSelect.jsx    # Custom degree selector component
+│   │   ├── ResumeChecker.jsx   # AI Resume ATS evaluation card
+│   │   ├── IdeaMeter.jsx       # Interactive AI Startup idea validator
+│   │   └── styles.css          # Premium design system & CSS rules
+└── docs/                       # Technical specs & handoff documentation
 ```
-Expect a JSON response containing the initial advisor conversational message:
-`{"message": "...", "is_analysis": false, "analysis": null, "offer_counselor": false, "counselor": null}`
+
+---
+
+## 🚀 Running the Application Locally
+
+### 1. Run the Backend Server
+1. Navigate to the `backend/` directory:
+   ```bash
+   cd backend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Set up environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+   *Open `.env` and fill in your API key (`GROQ_API_KEY` is highly recommended and pre-configured for free-tier Llama 3.3 inference).*
+4. Start the server:
+   ```bash
+   npm start
+   ```
+   *The backend will run on `http://localhost:4000`.*
+
+### 2. Run the Frontend Development Server
+1. Navigate to the `frontend/` directory:
+   ```bash
+   cd ../frontend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Launch the development server:
+   ```bash
+   npm run dev
+   ```
+   *The client will start on `http://localhost:5173` and proxy request endpoints to the Node backend.*
