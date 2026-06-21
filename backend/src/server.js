@@ -17,8 +17,15 @@ app.use("/api", ideaMeterRouter);
 app.use("/api", resumeRouter);
 app.use("/api", examDiscoveryRouter);
 
+// Support stripped prefixes from Vercel Services routing layer
+app.use("/", reasonRouter);
+app.use("/", chatRouter);
+app.use("/", ideaMeterRouter);
+app.use("/", resumeRouter);
+app.use("/", examDiscoveryRouter);
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
+app.get("/health", (req, res) => res.json({ ok: true }));
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Life Lens backend listening on :${PORT}`));
