@@ -54,7 +54,8 @@ export default function ResumeChecker({ defaultCountry = "", onAnalysisComplete 
 
       let parsed;
       try {
-        parsed = await parseResume(selectedFile, country);
+        const parseResult = await parseResume(selectedFile, country);
+        parsed = parseResult.parsedResume;
         console.log("[ResumeChecker] Stage 2+3: Parsed resume:", parsed);
       } catch (err) {
         setStep("extract", "error");
@@ -132,6 +133,15 @@ export default function ResumeChecker({ defaultCountry = "", onAnalysisComplete 
     return "var(--red)";
   };
 
+  const getResumeLoadingText = () => {
+    if (pipelineStatus.score === "running") return "Generating recommendations...";
+    if (pipelineStatus.ats === "running") return "Running ATS analysis...";
+    if (pipelineStatus.parse === "running") return "Parsing resume...";
+    if (pipelineStatus.extract === "running") return "Extracting resume text...";
+    if (pipelineStatus.upload === "running") return "Uploading file...";
+    return "Processing your resume...";
+  };
+
   return (
     <div className="resume-checker-wrap">
       <div className="resume-checker-header">
@@ -191,7 +201,7 @@ export default function ResumeChecker({ defaultCountry = "", onAnalysisComplete 
       {/* Pipeline progress */}
       {loading && (
         <div className="resume-pipeline">
-          <p className="resume-pipeline__title">🔄 Processing your resume...</p>
+          <p className="resume-pipeline__title">🔄 {getResumeLoadingText()}</p>
           <div className="resume-pipeline__steps">
             {PIPELINE_STEPS.map((step) => {
               const status = pipelineStatus[step.id];

@@ -125,44 +125,23 @@ export default function ChatAdvisor({ decisionType, context, onReset }) {
     if (!loading) return;
 
     let statuses = [];
-    const isFirstLoad = history.length <= 1;
-
     if (decisionType === "grad_school") {
-      statuses = isFirstLoad
-        ? [
-            "Advisor is analyzing target degree...",
-            "Matching profile with university criteria...",
-            "Researching admission cutoffs..."
-          ]
-        : [
-            "Advisor is checking eligibility...",
-            "Refining academic trajectory...",
-            "Analyzing cost of attendance..."
-          ];
+      statuses = [
+        "Analyzing profile...",
+        "Finding universities...",
+        "Matching entrance exams..."
+      ];
     } else if (decisionType === "job") {
-      statuses = isFirstLoad
-        ? [
-            "Career Advisor is assessing role...",
-            "Analyzing industry salary bands...",
-            "Mapping skill alignment..."
-          ]
-        : [
-            "Advisor is checking job benefits...",
-            "Evaluating growth prospects...",
-            "Assessing career match..."
-          ];
+      statuses = [
+        "Matching careers...",
+        "Generating recommendations..."
+      ];
     } else { // startup
-      statuses = isFirstLoad
-        ? [
-            "Startup Advisor is checking market...",
-            "Validating revenue model & runway...",
-            "Analyzing industry sector trends..."
-          ]
-        : [
-            "Advisor is assessing market risk...",
-            "Evaluating funding feasibility...",
-            "Identifying potential investors..."
-          ];
+      statuses = [
+        "Evaluating startup idea...",
+        "Analyzing market fit...",
+        "Scoring opportunity..."
+      ];
     }
 
     setLoadingStatus(statuses[0]);
@@ -170,10 +149,10 @@ export default function ChatAdvisor({ decisionType, context, onReset }) {
     const interval = setInterval(() => {
       index = (index + 1) % statuses.length;
       setLoadingStatus(statuses[index]);
-    }, 2500);
+    }, 2000);
 
     return () => clearInterval(interval);
-  }, [loading, decisionType, history.length]);
+  }, [loading, decisionType]);
 
   useEffect(() => {
     if (startedRef.current) return;
@@ -182,11 +161,7 @@ export default function ChatAdvisor({ decisionType, context, onReset }) {
     sendTurn([{ role: "user", content: initMsg }], true);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    if (history.length > 2) {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [history, loading]);
+  // Automatic scrolling is disabled to preserve the user's reading position.
 
   async function sendTurn(apiMessages, isInit = false) {
     setLoading(true);

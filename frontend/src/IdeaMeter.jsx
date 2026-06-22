@@ -117,6 +117,23 @@ export default function IdeaMeter({ onReset, onBack }) {
   const [answers, setAnswers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [loadingStatus, setLoadingStatus] = useState("Evaluating...");
+
+  useEffect(() => {
+    if (!loading) return;
+    const statuses = [
+      "Evaluating startup idea...",
+      "Analyzing market fit...",
+      "Scoring opportunity..."
+    ];
+    setLoadingStatus(statuses[0]);
+    let index = 0;
+    const interval = setInterval(() => {
+      index = (index + 1) % statuses.length;
+      setLoadingStatus(statuses[index]);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [loading]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -223,7 +240,7 @@ export default function IdeaMeter({ onReset, onBack }) {
                 <span className="dot" />
                 <span className="dot" />
                 <span className="dot" />
-                <span>Evaluating…</span>
+                <span>{loadingStatus}</span>
               </span>
             ) : (
               "Evaluate my idea →"
@@ -280,7 +297,7 @@ export default function IdeaMeter({ onReset, onBack }) {
                   <span className="dot" />
                   <span className="dot" />
                   <span className="dot" />
-                  <span>Evaluating…</span>
+                  <span>{loadingStatus}</span>
                 </span>
               ) : (
                 "Submit Answers & Evaluate →"
