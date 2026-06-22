@@ -13,11 +13,11 @@ export async function runReasoning(payload) {
   return res.json();
 }
 
-export async function sendChatMessage({ decision_type, history, country, field }) {
+export async function sendChatMessage({ decision_type, history, country, field, colleges, context }) {
   const res = await fetch(`${BASE}/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ decision_type, history, country, field }),
+    body: JSON.stringify({ decision_type, history, country, field, colleges, context }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));

@@ -1183,6 +1183,49 @@ body { margin: 0; overflow-x: hidden; }
 
 .typing-bubble .dot:nth-child(2) { animation-delay: 0.18s; }
 .typing-bubble .dot:nth-child(3) { animation-delay: 0.36s; }
+/* Suggestions Row */
+.chat-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 24px 0 24px;
+  background: var(--bg-2);
+  animation: up 0.26s var(--ease-out) both;
+}
+
+.suggestion-btn {
+  background: var(--bg-3);
+  border: 1.5px solid var(--line);
+  color: var(--text-2);
+  padding: 8px 16px;
+  border-radius: 980px;
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+  outline: none;
+}
+
+.suggestion-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-bg);
+  transform: translateY(-1px);
+}
+
+.suggestion-btn:active {
+  transform: translateY(0);
+}
+
+.suggestion-btn.other {
+  border-color: var(--caramel);
+  color: var(--caramel);
+}
+
+.suggestion-btn.other:hover {
+  background: rgba(212, 160, 85, 0.08);
+}
 
 /* Input */
 .chat-input-row {

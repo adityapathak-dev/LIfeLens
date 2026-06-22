@@ -23,6 +23,10 @@ export default function App() {
   }, [theme]);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [phase, decisionType]);
+
+  useEffect(() => {
     function handleMouseMove(e) {
       document.documentElement.style.setProperty("--mouse-x", `${e.clientX}px`);
       document.documentElement.style.setProperty("--mouse-y", `${e.clientY}px`);

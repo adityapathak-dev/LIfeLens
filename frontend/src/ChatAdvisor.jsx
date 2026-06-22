@@ -10,44 +10,59 @@ const LABELS = {
   startup: "Startup Advisor",
 };
 
+const FALLBACK_OPTIONS = {
+  grad_school: ["Top Universities", "Entrance Exams", "Career Paths"],
+  job: ["Resume Improvement", "Salary Outlook", "Skills Gap"],
+  startup: ["Market Validation", "Revenue Model", "Competitor Analysis"],
+};
+
 /* ─── Build the first "user" message from context form data ─── */
 function buildContextMessage(decisionType, context) {
+  const locationLines = [];
+  if (context.userCity) locationLines.push(context.userCity);
+  if (context.userState) locationLines.push(context.userState);
+  if (context.userCountry) locationLines.push(context.userCountry);
+  const locationStr = locationLines.join(", ");
+
   if (decisionType === "grad_school") {
     const lines = ["I am trying to decide on graduate school."];
-    if (context.country) lines.push(`Country: ${context.country}`);
-    if (context.stream) lines.push(`Stream / Program: ${context.stream}`);
-    if (context.colleges) lines.push(`Colleges I am considering: ${context.colleges}`);
-    if (context.financialSituation) lines.push(`Financial situation: ${context.financialSituation}`);
-    if (context.runway) lines.push(`Savings buffer: ${context.runway} months`);
-    if (context.locationPreference) lines.push(`Location preferences: ${context.locationPreference}`);
+    if (locationStr) lines.push(`Current Location: ${locationStr}`);
+    if (context.country) lines.push(`Target Country: ${context.country}`);
+    if (context.targetDegree) lines.push(`Target Degree: ${context.targetDegree}`);
+    if (context.streamCategory) lines.push(`Branch/Stream Category: ${context.streamCategory}`);
+    if (context.colleges) lines.push(`Colleges I am considering:\n${context.colleges}`);
+    if (context.financialSituation) lines.push(`Financial Situation: ${context.financialSituation}`);
+    if (context.runway) lines.push(`Savings Buffer: ${context.runway} months`);
+    if (context.locationPreference) lines.push(`Location Preferences: ${context.locationPreference}`);
     return lines.join("\n");
   }
   if (decisionType === "job") {
     const lines = ["I am evaluating a job decision."];
-    if (context.country) lines.push(`Country / City: ${context.country}`);
-    if (context.role) lines.push(`Role: ${context.role}`);
-    if (context.companies) lines.push(`Companies / Offers:\n${context.companies}`);
-    if (context.skills) lines.push(`My skills / tech stack: ${context.skills}`);
-    if (context.currentSituation) lines.push(`Current situation: ${context.currentSituation}`);
-    if (context.runway) lines.push(`Savings buffer: ${context.runway} months`);
-    if (context.locationPreference) lines.push(`Location preferences: ${context.locationPreference}`);
-    if (context.hasDependents != null)
-      lines.push(`Has dependents: ${context.hasDependents ? "Yes" : "No"}`);
+    if (locationStr) lines.push(`Current Location: ${locationStr}`);
+    if (context.country) lines.push(`Target Country: ${context.country}`);
+    if (context.city) lines.push(`Target City/Region: ${context.city}`);
+    if (context.role) lines.push(`Role / Job Title: ${context.role}`);
+    if (context.companies) lines.push(`Companies under consideration:\n${context.companies}`);
+    if (context.skills) lines.push(`My Skills / Tech Stack: ${context.skills}`);
+    if (context.currentSituation) lines.push(`Current Work/Student Status: ${context.currentSituation}`);
+    if (context.runway) lines.push(`Savings Buffer: ${context.runway} months`);
+    if (context.locationPreference) lines.push(`Location Preferences: ${context.locationPreference}`);
     return lines.join("\n");
   }
   if (decisionType === "startup") {
     const lines = ["I am thinking through a startup decision."];
-    if (context.country) lines.push(`Country / Market: ${context.country}`);
+    if (locationStr) lines.push(`Current Location: ${locationStr}`);
+    if (context.country) lines.push(`Target Market: ${context.country}`);
     if (context.field) {
       const matchingField = FIELD_OPTS.find((f) => f.value === context.field);
       lines.push(`Industry Field/Sector: ${matchingField ? matchingField.label : context.field}`);
     }
-    if (context.myRole) lines.push(`My role: ${context.myRole}`);
-    if (context.description) lines.push(`What the startup does: ${context.description}`);
-    if (context.fundingStage) lines.push(`Funding stage: ${context.fundingStage}`);
-    if (context.runway) lines.push(`Savings buffer: ${context.runway} months`);
-    if (context.locationPreference) lines.push(`Location preferences: ${context.locationPreference}`);
-    if (context.riskTolerance) lines.push(`Risk tolerance: ${context.riskTolerance}/5`);
+    if (context.myRole) lines.push(`My Role: ${context.myRole}`);
+    if (context.description) lines.push(`Startup Description: ${context.description}`);
+    if (context.fundingStage) lines.push(`Funding Stage: ${context.fundingStage}`);
+    if (context.runway) lines.push(`Savings Buffer: ${context.runway} months`);
+    if (context.locationPreference) lines.push(`Location Preferences: ${context.locationPreference}`);
+    if (context.riskTolerance) lines.push(`Risk Tolerance: ${context.riskTolerance}/5`);
     return lines.join("\n");
   }
   return "I need help thinking through an important decision.";
@@ -95,6 +110,7 @@ export default function ChatAdvisor({ decisionType, context, onReset }) {
   const [history, setHistory] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loadingStatus, setLoadingStatus] = useState("Thinking...");
   const [showCounselor, setShowCounselor] = useState(false);
   const [counselor, setCounselor] = useState(null);
   const bottomRef = useRef(null);
@@ -104,6 +120,60 @@ export default function ChatAdvisor({ decisionType, context, onReset }) {
   const latestAnalysis = history.findLast?.((m) => m.parsed?.is_analysis)
     ?? history.filter((m) => m.parsed?.is_analysis).at(-1);
   const hasAnalysis = Boolean(latestAnalysis);
+
+  useEffect(() => {
+    if (!loading) return;
+
+    let statuses = [];
+    const isFirstLoad = history.length <= 1;
+
+    if (decisionType === "grad_school") {
+      statuses = isFirstLoad
+        ? [
+            "Advisor is analyzing target degree...",
+            "Matching profile with university criteria...",
+            "Researching admission cutoffs..."
+          ]
+        : [
+            "Advisor is checking eligibility...",
+            "Refining academic trajectory...",
+            "Analyzing cost of attendance..."
+          ];
+    } else if (decisionType === "job") {
+      statuses = isFirstLoad
+        ? [
+            "Career Advisor is assessing role...",
+            "Analyzing industry salary bands...",
+            "Mapping skill alignment..."
+          ]
+        : [
+            "Advisor is checking job benefits...",
+            "Evaluating growth prospects...",
+            "Assessing career match..."
+          ];
+    } else { // startup
+      statuses = isFirstLoad
+        ? [
+            "Startup Advisor is checking market...",
+            "Validating revenue model & runway...",
+            "Analyzing industry sector trends..."
+          ]
+        : [
+            "Advisor is assessing market risk...",
+            "Evaluating funding feasibility...",
+            "Identifying potential investors..."
+          ];
+    }
+
+    setLoadingStatus(statuses[0]);
+    let index = 0;
+    const interval = setInterval(() => {
+      index = (index + 1) % statuses.length;
+      setLoadingStatus(statuses[index]);
+    }, 2500);
+
+    return () => clearInterval(interval);
+  }, [loading, decisionType, history.length]);
 
   useEffect(() => {
     if (startedRef.current) return;
@@ -122,8 +192,10 @@ export default function ChatAdvisor({ decisionType, context, onReset }) {
       const data = await sendChatMessage({
         decision_type: decisionType,
         history: apiMessages,
-        country: context.country,
+        country: context.country || context.userCountry,
         field: context.field,
+        colleges: context.colleges,
+        context: context,
       });
 
       if (data.counselor) setCounselor(data.counselor);
@@ -177,6 +249,32 @@ export default function ChatAdvisor({ decisionType, context, onReset }) {
     }));
     sendTurn(apiMessages);
   }
+
+  function handleSendOption(optionText) {
+    if (loading || hasAnalysis) return;
+    const userEntry = { role: "user", content: optionText, id: Date.now() };
+    setHistory((prev) => [...prev, userEntry]);
+
+    const apiMessages = [...history, userEntry].map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+    sendTurn(apiMessages);
+  }
+
+  const lastMessage = history[history.length - 1];
+  const isLastAssistant = lastMessage?.role === "assistant";
+  const rawSuggestions = isLastAssistant && Array.isArray(lastMessage.parsed?.suggested_options)
+    ? lastMessage.parsed.suggested_options
+    : [];
+
+  let suggestions = rawSuggestions.filter(Boolean).slice(0, 3);
+  if (suggestions.length < 3 && isLastAssistant && !hasAnalysis && !loading) {
+    const fallbacks = FALLBACK_OPTIONS[decisionType] || [];
+    suggestions = [...suggestions, ...fallbacks.filter(f => !suggestions.includes(f))].slice(0, 3);
+  }
+
+  const showSuggestions = isLastAssistant && !hasAnalysis && !loading && suggestions.length > 0;
 
   return (
     <div className="chat-shell">
@@ -244,9 +342,14 @@ export default function ChatAdvisor({ decisionType, context, onReset }) {
               <img className="msg-avatar-img" src={logoImg} alt="Life Lens Advisor Logo" />
             </div>
             <div className="msg-bubble typing-bubble" aria-label="Advisor is thinking">
-              <span className="dot" />
-              <span className="dot" />
-              <span className="dot" />
+              <div className="typing-dots" style={{ display: "flex", gap: "4px", marginRight: "8px" }}>
+                <span className="dot" />
+                <span className="dot" />
+                <span className="dot" />
+              </div>
+              <span className="typing-status-text" style={{ fontSize: "13px", color: "var(--text-3)", fontWeight: "500" }}>
+                {loadingStatus}
+              </span>
             </div>
           </div>
         )}
@@ -270,6 +373,29 @@ export default function ChatAdvisor({ decisionType, context, onReset }) {
       )}
 
       {showCounselor && counselor && <CounselorCard counselor={counselor} />}
+
+      {/* ── Suggestions Row ── */}
+      {showSuggestions && (
+        <div className="chat-suggestions">
+          {suggestions.map((opt, idx) => (
+            <button
+              key={idx}
+              type="button"
+              className="suggestion-btn"
+              onClick={() => handleSendOption(opt)}
+            >
+              {opt}
+            </button>
+          ))}
+          <button
+            type="button"
+            className="suggestion-btn other"
+            onClick={() => inputRef.current?.focus()}
+          >
+            Other (Type Your Own)
+          </button>
+        </div>
+      )}
 
       {/* ── Input row ── */}
       <form className="chat-input-row" onSubmit={handleSend}>

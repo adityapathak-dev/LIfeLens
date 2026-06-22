@@ -70,6 +70,10 @@ export default function ContextIntake({ decisionType, onSubmit, onBack }) {
   const [activeTab, setActiveTab] = useState("advisor");
   const [validationError, setValidationError] = useState("");
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [activeTab]);
+
   const userCountryLower = (form.userCountry || "").trim().toLowerCase();
   const statePlaceholder = userCountryLower === "india" ? "e.g. Karnataka" : "e.g. California";
   const cityPlaceholder = userCountryLower === "india" ? "e.g. Bangalore" : "e.g. San Francisco";

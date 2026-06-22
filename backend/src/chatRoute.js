@@ -31,7 +31,7 @@ function safeParseJSON(text) {
  * each turn. The LLM sees the complete history and the system prompt.
  */
 router.post("/chat", async (req, res) => {
-  const { decision_type, history, country, field, colleges } = req.body;
+  const { decision_type, history, country, field, colleges, context } = req.body;
 
   if (!decision_type || !CHAT_SYSTEM_PROMPTS[decision_type]) {
     return res
@@ -43,7 +43,45 @@ router.post("/chat", async (req, res) => {
     return res.status(400).json({ error: "history must be a non-empty array of {role, content} objects." });
   }
 
-  const systemPrompt = CHAT_SYSTEM_PROMPTS[decision_type];
+  let systemPrompt = CHAT_SYSTEM_PROMPTS[decision_type];
+
+  if (context) {
+    let contextStr = "\n\nCRITICAL CONTEXT INFORMATION (DO NOT ASK FOR THESE AGAIN):\n";
+    if (context.userCountry) contextStr += `- Current Country: ${context.userCountry}\n`;
+    if (context.userState) contextStr += `- Current State/Province: ${context.userState}\n`;
+    if (context.userCity) contextStr += `- Current City: ${context.userCity}\n`;
+    if (context.country) contextStr += `- Target Country/Market: ${context.country}\n`;
+
+    if (decision_type === "grad_school") {
+      if (context.targetDegree) contextStr += `- Target Degree: ${context.targetDegree}\n`;
+      if (context.streamCategory) contextStr += `- Stream Category: ${context.streamCategory}\n`;
+      if (context.colleges) contextStr += `- Colleges under consideration: ${context.colleges}\n`;
+      if (context.financialSituation) contextStr += `- Financial situation/Budget: ${context.financialSituation}\n`;
+      if (context.runway) contextStr += `- Savings buffer: ${context.runway} months\n`;
+      if (context.locationPreference) contextStr += `- Location preferences: ${context.locationPreference}\n`;
+    } else if (decision_type === "job") {
+      if (context.city) contextStr += `- Target City/Region: ${context.city}\n`;
+      if (context.role) contextStr += `- Target Role/Job Title: ${context.role}\n`;
+      if (context.companies) contextStr += `- Companies/Offers under consideration: ${context.companies}\n`;
+      if (context.skills) contextStr += `- User Skills/Tech Stack: ${context.skills}\n`;
+      if (context.currentSituation) contextStr += `- Current Work/Student Situation: ${context.currentSituation}\n`;
+      if (context.runway) contextStr += `- Savings buffer: ${context.runway} months\n`;
+      if (context.locationPreference) contextStr += `- Location preferences: ${context.locationPreference}\n`;
+    } else if (decision_type === "startup") {
+      if (context.field) contextStr += `- Industry Field/Sector: ${context.field}\n`;
+      if (context.myRole) contextStr += `- User Role in Startup: ${context.myRole}\n`;
+      if (context.description) contextStr += `- Startup Description: ${context.description}\n`;
+      if (context.fundingStage) contextStr += `- Funding Stage: ${context.fundingStage}\n`;
+      if (context.runway) contextStr += `- Savings buffer: ${context.runway} months\n`;
+      if (context.locationPreference) contextStr += `- Location preferences: ${context.locationPreference}\n`;
+      if (context.riskTolerance) contextStr += `- Risk Tolerance: ${context.riskTolerance}/5\n`;
+    }
+
+    contextStr += `
+You MUST NOT ask the user for any of the details listed above. You already have this information. Continue the conversation directly, deep diving into other aspects depending on what is missing to generate a full analysis. Ensure that any URLs returned are actual, official websites. Do not use generic domain placeholders.
+`;
+    systemPrompt = systemPrompt + contextStr;
+  }
 
   try {
     const rawText = await llmChatComplete(systemPrompt, history);
