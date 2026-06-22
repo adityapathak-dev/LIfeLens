@@ -1227,6 +1227,18 @@ body { margin: 0; overflow-x: hidden; }
   background: rgba(212, 160, 85, 0.08);
 }
 
+[data-theme="light"] .suggestion-btn.other {
+  border-color: #8c5310;
+  color: #8c5310;
+  background: var(--bg-1);
+}
+
+[data-theme="light"] .suggestion-btn.other:hover {
+  background: rgba(140, 83, 16, 0.08);
+  border-color: #70420c;
+  color: #70420c;
+}
+
 /* Input */
 .chat-input-row {
   padding: 16px 24px;
