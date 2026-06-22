@@ -183,7 +183,9 @@ export default function ChatAdvisor({ decisionType, context, onReset }) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (history.length > 2) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [history, loading]);
 
   async function sendTurn(apiMessages, isInit = false) {
@@ -230,7 +232,9 @@ export default function ChatAdvisor({ decisionType, context, onReset }) {
       );
     } finally {
       setLoading(false);
-      setTimeout(() => inputRef.current?.focus(), 80);
+      if (!isInit) {
+        setTimeout(() => inputRef.current?.focus(), 80);
+      }
     }
   }
 
