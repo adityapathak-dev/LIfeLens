@@ -939,3 +939,17 @@ export const EXAM_DATABASE = [
     hint: "Total Score Range: 0 - 120"
   }
 ];
+
+export const EXAM_DATABASE_METADATA = {
+  last_verified: "2026-06-15T00:00:00Z"
+};
+
+const DATA_FRESHNESS_DAYS = 90;
+const lastVerifiedTime = new Date(EXAM_DATABASE_METADATA.last_verified).getTime();
+const daysElapsed = (Date.now() - lastVerifiedTime) / (1000 * 60 * 60 * 24);
+
+if (daysElapsed > DATA_FRESHNESS_DAYS) {
+  console.warn(`[examDatabase] WARNING: static dataset was last verified on ${EXAM_DATABASE_METADATA.last_verified} (exceeds freshness limit of ${DATA_FRESHNESS_DAYS} days). Consider reviewing and updating dynamic ranges and link parameters.`);
+} else {
+  console.log(`[examDatabase] Static dataset verification is current (last verified ${daysElapsed.toFixed(0)} days ago).`);
+}

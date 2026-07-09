@@ -3,6 +3,7 @@ import { llmChatComplete } from "./llmClient.js";
 import { CHAT_SYSTEM_PROMPTS } from "./chatPrompts.js";
 import { getCounselorByAreaOrCountry } from "./counselors.js";
 import { getInvestorsForField } from "./investors.js";
+import { recordCounselorTrigger, recordFallback } from "./usageMonitor.js";
 
 const router = express.Router();
 
@@ -292,6 +293,7 @@ You MUST NOT ask the user for any of the details listed above. You already have 
       }
     } catch (err) {
       console.error("[chatRoute] Primary LLM path failed or malformed, launching local fallback generator:", err.message);
+      recordFallback();
       parsed = generateLocalChatFallback(decision_type, colleges, country, context);
     }
 
@@ -314,15 +316,23 @@ You MUST NOT ask the user for any of the details listed above. You already have 
       response.counselor = getCounselorByAreaOrCountry(colleges, country);
     }
 
+    if (response.offer_counselor) {
+      recordCounselorTrigger();
+    }
+
     return res.json(response);
   } catch (err) {
     console.error("[chatRoute] Critical recovery failure inside chat:", err);
+    recordFallback();
     // Ultimate safety recovery: return a valid local fallback response directly
     const fallbackResponse = generateLocalChatFallback(decision_type, colleges, country, context);
     if (fallbackResponse.is_analysis && decision_type === "startup" && fallbackResponse.analysis) {
       fallbackResponse.analysis.investors = getInvestorsForField(field);
     }
     fallbackResponse.counselor = getCounselorByAreaOrCountry(colleges, country);
+    if (fallbackResponse.offer_counselor) {
+      recordCounselorTrigger();
+    }
     return res.json(fallbackResponse);
   }
 });

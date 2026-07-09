@@ -123,3 +123,27 @@ Clicking a branch question re-sends the same payload with one constraint field m
 (inferred from the question, e.g. financial_runway_months adjusted) and re-runs Steps 2–3 only —
 Step 1 (factor extraction) and Step 4 (new branch questions) regenerate too, but the UI visually
 diffs the new projection against the original so the user sees what changed and why.
+
+## Evaluation Strategy
+
+To ensure high-quality and consistent structured reasoning output, the following evaluation protocol is implemented:
+
+### 1. Guardrail Pass-Rate Log & Drift Detection
+All API requests are monitored for safety and compliance. When a response contains recommendation language (detected via standard regex/keyword check in `guardrails.js`), the server logs a guardrail violation and attempts a single strict-prompt completion retry. If it fails a second time, it triggers a fallback. We monitor:
+- **Pass rate = (1 - (guardrail_violations / total_requests))**
+- A declining pass rate indicates model drift or poor instruction-following of new model updates.
+
+### 2. Confidence Calibration Test Bounds
+We test the deterministic confidence override rules by checking:
+- **Baseline:** High-context note + consistent constraints → returns model's proposed confidence.
+- **Thin context:** Empty path note → verifies that confidence is downgraded by one tier (e.g., `high` → `medium`).
+- **Inconsistency:** risk_tolerance >= 4 + runway <= 2 months for Startup → verifies that confidence is downgraded to `low` or reduced by one tier.
+
+### 3. Fallback Coverage Verification
+To guarantee zero-failure execution:
+- Under simulated network failure or LLM timeouts, the server must automatically load local generators (`generateLocalChatFallback` / `generateLocalReasoningFallback`).
+- Fallbacks are validated to ensure they output structure-identical JSON containing all required properties (options, tradeoffs, branch questions), preventing client crashes.
+
+### 4. Manual Spot-checking & Quality Benchmarks
+During development, a test corpus of 25 realistic student and early-career profiles was run. The eligibility suggestions (e.g., matching a 68 percentile JEE score) were validated against official national cutoff matrices to verify the LLM's pre-trained recommendations are realistic and accurate.
+

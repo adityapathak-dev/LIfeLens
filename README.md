@@ -63,6 +63,63 @@ flowchart TD
 
 ---
 
+## 🎯 Scope Boundaries & Assumptions
+
+### Scope Boundaries & Non-Goals
+- **Not a Therapist/Crisis Center:** Built for career/academic choice-structuring only. Real-world counseling referrals are hardcoded bypass mechanisms.
+- **Not a Live Scraping Engine:** Projections leverage LLM pre-trained context + our static curated datasets rather than real-time web-scraping APIs.
+- **Strict Privacy Model:** The service is completely stateless; no user data, uploads, or logs are stored in databases.
+- **College-track Priority in V1:** Deeper validations (bounds checking, course-to-exam mapping) are prioritized for the Graduate School path.
+
+### Key Stated Assumptions
+- **Target User:** Early-career professionals & students (ages 18-30) facing a specific decision.
+- **Availability of Info:** Users have access to their credentials/scores and can specify competing offers or target colleges.
+- **LLM Context Currency:** Pre-trained world knowledge of LLMs is relied upon for general market projections (disclosed clearly).
+
+---
+
+## 🔀 Data Pipeline & Sources
+
+### Architecture Flow
+
+```mermaid
+flowchart TD
+    A[User Intake Input] --> B[examDiscoveryRoute.js]
+    B -->|Check Score Bounds| C[examDatabase.js Curated Database]
+    A -->|Submit Form Context| D[stateless chatRoute.js / reasonRoute.js]
+    D -->|Context Bootstrapping| E[llmClient.js Swappable Client]
+    E -->|JSON Prompt Constraints| F[LLM Inference Groq/OpenAI/Anthropic]
+    F -->|Return Structured JSON| G[guardrails.js Validation Pipeline]
+    G -->|Confidence Override & Disclaimer Check| H[Client Side React App]
+    H -->|Render Dossier UI / Counselor Referral| I[User Interface]
+```
+
+### Curated Reference Databases Used
+- **`examDatabase.js`** (Curated static dataset): Links over 70 global entrance exams (JEE, SAT, GRE, MCAT, etc.) to target degrees, conducting bodies, and exact score bounds.
+- **`counselors.js`** (Curated static directory): Maps user locations (cities in India, states in US, national bodies in UK) to physical counseling hotlines.
+- **`investors.js`** (Curated static directory): Maps startup categories to relevant venture capitals and accelerator hubs.
+
+---
+
+## 🧩 Modular Component Boundaries
+
+To ensure clean development separation and ease of maintenance, the monorepo is split into decoupled components:
+
+### Frontend (React + Vite)
+- **`DecisionSelector.jsx`**: Core landing page pathway selection card router.
+- **`ContextIntake.jsx`**: Dynamic multi-stage context collector featuring progress bars and custom select controls.
+- **`ChatAdvisor.jsx`**: Multi-turn chat interface coordinating text streaming and Dossier panel rendering.
+- **`ResumeChecker.jsx` & `IdeaMeter.jsx`**: Isolated auxiliary feature cards that leverage standalone backend routes.
+
+### Backend (Node + Express)
+- **`server.js`**: Application entry point registering middleware (rate-limiting/abuse tracking) and routers.
+- **`usageMonitor.js`**: In-memory logger tracking active requests, abuse states, model drift ratios, and data verification limits.
+- **`chatRoute.js` & `reasonRoute.js`**: Handlers managing stateless conversation building and guardrail integration.
+- **`guardrails.js`**: Regex compiler blocking recommendation terms, performing confidence overrides, and injecting disclaimers.
+- **`llmClient.js`**: Decoupled multi-provider API coordinator with instant fallback capability.
+
+---
+
 ## 📂 Project Structure
 
 ```bash

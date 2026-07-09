@@ -4,6 +4,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { llmComplete } from "./llmClient.js";
 import { runGuardrails } from "./guardrails.js";
+import { recordGuardrailViolation, recordFallback } from "./usageMonitor.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SYSTEM_PROMPT = fs.readFileSync(path.join(__dirname, "system_prompt.txt"), "utf-8");
@@ -84,6 +85,7 @@ router.post("/reason", async (req, res) => {
       // One retry with a stricter system prompt reminder if recommendation language slipped through.
       if (!result.safe) {
         console.warn("[reasonRoute] Responsible-AI guardrails failed, retrying once with strict prompt...");
+        recordGuardrailViolation();
         const strictPrompt =
           SYSTEM_PROMPT +
           "\n\nREMINDER: Your previous response contained recommendation language. " +
@@ -97,10 +99,12 @@ router.post("/reason", async (req, res) => {
       
       if (!result.safe) {
         console.warn("[reasonRoute] Guardrails failed twice, falling back to local reasoning generator.");
+        recordGuardrailViolation();
         throw new Error("Guardrails safety failure");
       }
     } catch (err) {
       console.error("[reasonRoute] Reasoning pipeline error, serving local fallback:", err.message);
+      recordFallback();
       parsed = generateLocalReasoningFallback(requestPayload);
       result = { safe: true, data: parsed };
     }
@@ -108,6 +112,7 @@ router.post("/reason", async (req, res) => {
     return res.json(result.data);
   } catch (err) {
     console.error("[reasonRoute] Critical fallback exception:", err);
+    recordFallback();
     const ultimateFallback = generateLocalReasoningFallback(requestPayload);
     return res.json(ultimateFallback);
   }

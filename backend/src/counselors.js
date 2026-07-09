@@ -261,3 +261,17 @@ export function getCounselor(country) {
   const firstWord = raw.split(/[\s,]+/)[0];
   return COUNSELORS[firstWord] || COUNSELORS.default;
 }
+
+export const COUNSELORS_METADATA = {
+  last_verified: "2026-06-15T00:00:00Z"
+};
+
+const DATA_FRESHNESS_DAYS = 90;
+const lastVerifiedTime = new Date(COUNSELORS_METADATA.last_verified).getTime();
+const daysElapsed = (Date.now() - lastVerifiedTime) / (1000 * 60 * 60 * 24);
+
+if (daysElapsed > DATA_FRESHNESS_DAYS) {
+  console.warn(`[counselors] WARNING: static dataset was last verified on ${COUNSELORS_METADATA.last_verified} (exceeds freshness limit of ${DATA_FRESHNESS_DAYS} days). Consider reviewing and updating counselor numbers and helpline links.`);
+} else {
+  console.log(`[counselors] Static dataset verification is current (last verified ${daysElapsed.toFixed(0)} days ago).`);
+}
