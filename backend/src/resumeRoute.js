@@ -94,7 +94,12 @@ CRITICAL OUTPUT RULE: Respond ONLY with a single valid JSON object. No markdown 
   ]
 }`;
 
-const ATS_CHECK_PROMPT = `You are an expert ATS (Applicant Tracking System) resume evaluator and senior technical recruiter. Perform a semantic, template-agnostic document analysis of the raw resume text provided. Do not rely on fixed section titles; instead, identify and classify information regardless of layout, formatting, section names, ordering, or design.
+const ATS_CHECK_PROMPT = `You are an expert ATS (Applicant Tracking System) resume evaluator and a highly critical, strict senior technical recruiter. Perform a semantic, template-agnostic document analysis of the raw resume text provided. Do not rely on fixed section titles; instead, identify and classify information regardless of layout, formatting, section names, ordering, or design.
+
+CRITICAL GRADING DIRECTIVE (NO INFLATION):
+- You must grade EXTREMELY STRICTLY. Most student and entry-level resumes should receive scores between 30 and 55. Do not hand out 70+ scores unless the resume shows significant professional experience, highly complex custom projects, and clear quantified business impact.
+- PROJECT EVALUATION IS RIGOROUS: Trivial or basic projects (e.g., standard personal portfolios, basic calculators, weather apps, simple note-taking/todo list apps, local clone apps without custom scaling, or standard tutorial projects) MUST be penalized heavily. Rate their "project_quality" in the 20-40 range. Explain clearly why these projects fail to impress recruiters, call them out as "basic tutorial projects", and specify how the candidate can build high-impact, production-grade systems (e.g., handling state, database indexing, caching, API security, custom deployment pipelines, or real user traffic).
+- EXPERIENCE MATCHING: Verify if the work experience shows real-world full-time employment, internships, or just school projects. Be honest.
 
 Evaluate the resume text provided. Return a single valid JSON object.
 
@@ -103,7 +108,7 @@ Scoring breakdown criteria (0-100):
 - Formatting & Structure: Standard margins, spacing, alignment, font sizes, chronological structure.
 - Content Quality: Strong action verbs, active tone, clear statements, lack of buzzwords/typos.
 - Experience Quality: Progression of roles, details of responsibilities, and clear professional scoping.
-- Project Quality: Clearly described projects showcasing stack, technical depth, and outcomes.
+- Project Quality: Clearly described projects showcasing stack, technical depth, and outcomes. If projects are basic or standard tutorials, penalize heavily.
 - Skills Strength: Depth of tech/professional skills, classification, and completeness.
 - Impact & Quantification: Quantified achievements, percentages, metrics, or revenue/time savings.
 - Readability: Wordiness, flow, spacing, page count feasibility, readability indexes.
@@ -126,30 +131,30 @@ CRITICAL OUTPUT RULE: Respond ONLY with a single valid JSON object. No markdown 
     "volunteering": ["Extracted volunteer work, community service"],
     "other_content": ["Any other relevant sections, languages, interests, or courses"]
   },
-  "overall_score": 72,
+  "overall_score": 42,
   "category_scores": {
-    "ats_compatibility": 80,
-    "formatting_structure": 75,
-    "content_quality": 70,
-    "experience_quality": 60,
-    "project_quality": 85,
-    "skills_strength": 80,
-    "impact_quantification": 50,
-    "readability": 85,
-    "recruiter_appeal": 75
+    "ats_compatibility": 60,
+    "formatting_structure": 65,
+    "content_quality": 45,
+    "experience_quality": 30,
+    "project_quality": 35,
+    "skills_strength": 50,
+    "impact_quantification": 15,
+    "readability": 70,
+    "recruiter_appeal": 35
   },
   "strengths": [
-    "One sentence describing a clear strength of this resume"
+    "One sentence describing a genuine strength (if any) or positive aspect of the formatting."
   ],
   "weaknesses": [
-    "One sentence describing a clear weakness or risk in this resume"
+    "One sentence calling out major gaps, such as basic tutorial-grade projects or lack of experience metrics."
   ],
   "improvements": [
     {
-      "problem": "Briefly state the specific problem (e.g., Missing metrics in bullet points, Repetitive wording, Formatting issue, Unclear projects).",
-      "why_matters": "Why this specific issue prevents the candidate from passing resume screens.",
-      "recommended_fix": "How to resolve this issue in the resume.",
-      "example_improvement": "A concrete before-and-after rewrite or direct structural change demonstrating the fix."
+      "problem": "Identify a specific problem (e.g., Trivial/tutorial projects like a basic todo list or portfolio, missing metrics, repetitive verbs).",
+      "why_matters": "Why this specific issue prevents the candidate from passing resume screens or impressing recruiters.",
+      "recommended_fix": "How to resolve this issue by adding real architectural depth, database scaling, or infrastructure metrics.",
+      "example_improvement": "A concrete before-and-after rewrite demonstrating a complex system implementation over a basic one."
     }
   ],
   "template_recommendation": {
@@ -176,9 +181,9 @@ CRITICAL OUTPUT RULE: Respond ONLY with a single valid JSON object. No markdown 
 }
 
 Rules:
-- improvements must contain at least 4 detailed objects covering specific issues (weak bullet points, repetitive wording, ATS layout, low-impact descriptions, missing metrics, missing keywords, etc.).
+- improvements must contain at least 4 detailed objects. If the projects are basic, dedicate at least 2 of these objects to explaining how to replace or upgrade these projects into production-grade systems.
 - overleaf_templates must include at least 2 real, working LaTeX Overleaf template URLs or official university resume resources.
-- Infer any missing information from context (e.g. if graduation year is missing but they are in 3rd year of college, mention graduation year is expected around 2027).`;
+- Infer any missing information from context.`;
 
 function generateLocalParseFallback(filename, country, textContent) {
   const name = filename?.split(".")[0]?.replace(/[-_]/g, " ") || "Candidate Name";

@@ -151,6 +151,25 @@ Analysis response (after covering all critical factors):
         "link": "Real apply link — company careers page, LinkedIn search, or Indeed URL filtered for this role"
       }
     ],
+    "apply_now": [
+      {
+        "title": "Exact job title (e.g. Frontend Engineer)",
+        "company": "Real company name (e.g. Razorpay)",
+        "why_match": "One sentence: why the user's current skills make them a strong match right now",
+        "estimated_salary": "Realistic salary range for this role in the user's country",
+        "link": "Real apply link — company careers page or LinkedIn/Indeed URL for this role and location"
+      }
+    ],
+    "apply_after_upskill": [
+      {
+        "title": "Exact job title (e.g. ML Engineer)",
+        "company": "Real company name (e.g. Google)",
+        "missing_skills": ["Skill 1 they need to learn", "Skill 2 they need to learn"],
+        "why_worth_it": "One sentence: why this role is worth gaining those 1-2 skills for",
+        "estimated_salary": "Realistic salary range for this role",
+        "link": "Real apply link — company careers page or LinkedIn/Indeed URL for this role and location"
+      }
+    ],
     "disclaimer": "These are structured possibilities based on what you shared, not predictions. You are the one who decides — this tool provides suggestions based on your inputs."
   },
   "offer_counselor": false
@@ -164,8 +183,10 @@ Rules for the job analysis:
 - best_suggestion must be from the user's original list of offers
 - top_alternate must be a SPECIFIC ROLE at a SPECIFIC COMPANY (not just a company name) that exactly matches the user's tech stack and skills
 - explore_more must have at least 3 entries, each a specific role + company matching the user's skills
+- apply_now must have 4–6 entries — roles the user can apply to TODAY with their current skills. Must include real apply links.
+- apply_after_upskill must have 3–4 entries — roles just out of reach, each listing exactly 1–2 missing skills and why they are worth gaining
 - every entry must have a real apply link — prefer official careers pages; for companies without easy direct links, use a LinkedIn job search URL like https://www.linkedin.com/jobs/search/?keywords=java+developer&location=bangalore
-- every explore_more and top_alternate entry must have a realistic salary estimate
+- every apply_now, apply_after_upskill, explore_more, and top_alternate entry must have a realistic salary estimate
 
 If at any point the user expresses distress or feels overwhelmed, set offer_counselor to true.
 `;

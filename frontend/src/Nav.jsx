@@ -1,7 +1,7 @@
 import React from "react";
 import logoImg from "./assets/logo.jpg";
 
-export default function Nav({ theme, onToggle }) {
+export default function Nav({ theme, onToggle, user, onLogout }) {
   return (
     <header className="app-nav" role="banner">
       <div className="nav-inner">
@@ -15,27 +15,49 @@ export default function Nav({ theme, onToggle }) {
           </span>
         </div>
 
-        {/* Theme toggle */}
-        <button
-          id="theme-toggle"
-          className="theme-toggle"
-          onClick={onToggle}
-          aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-        >
-          {theme === "dark" ? (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <circle cx="12" cy="12" r="4"/>
-              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
-            </svg>
-          ) : (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
-            </svg>
+        <div className="nav-right">
+          {/* User info + logout */}
+          {user && (
+            <div className="nav-user">
+              {user.photoURL && (
+                <img className="nav-user-avatar" src={user.photoURL} alt={user.displayName || "User"} referrerPolicy="no-referrer" />
+              )}
+              <span className="nav-user-name">
+                {user.displayName || user.email?.split("@")[0] || "User"}
+              </span>
+              <button
+                className="nav-logout-btn"
+                onClick={onLogout}
+                type="button"
+                aria-label="Log out"
+              >
+                Log out
+              </button>
+            </div>
           )}
-          <span className="theme-toggle-label">
-            {theme === "dark" ? "Light" : "Dark"}
-          </span>
-        </button>
+
+          {/* Theme toggle */}
+          <button
+            id="theme-toggle"
+            className="theme-toggle"
+            onClick={onToggle}
+            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+          >
+            {theme === "dark" ? (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="4"/>
+                <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+              </svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+              </svg>
+            )}
+            <span className="theme-toggle-label">
+              {theme === "dark" ? "Light" : "Dark"}
+            </span>
+          </button>
+        </div>
       </div>
     </header>
   );

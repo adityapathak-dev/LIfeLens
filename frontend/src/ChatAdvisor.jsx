@@ -544,6 +544,76 @@ function AnalysisBlock({ analysis }) {
         </div>
       )}
 
+      {/* ── Jobs you qualify for RIGHT NOW ── */}
+      {analysis.apply_now?.length > 0 && (
+        <div className="analysis-job-matches">
+          <h4 className="analysis-job-matches__title">🎯 Jobs You Should Apply For Right Now</h4>
+          <p className="analysis-job-matches__subtitle">
+            Based on your current skills, you are a strong match for these roles today.
+          </p>
+          <div className="analysis-job-matches__list">
+            {analysis.apply_now.map((job, i) => (
+              <div key={i} className="analysis-job-card analysis-job-card--now">
+                <div className="analysis-job-card__header">
+                  <div>
+                    <span className="analysis-job-card__title">{job.title}</span>
+                    <span className="analysis-job-card__company"> @ {job.company}</span>
+                  </div>
+                  {job.link && (
+                    <a href={job.link} target="_blank" rel="noopener noreferrer" className="analysis-link-badge">
+                      Apply Now ↗
+                    </a>
+                  )}
+                </div>
+                <p className="analysis-job-card__reason">{job.why_match}</p>
+                {job.estimated_salary && (
+                  <div className="analysis-salary-badge">💰 {job.estimated_salary}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Jobs unlocked with 1–2 more skills ── */}
+      {analysis.apply_after_upskill?.length > 0 && (
+        <div className="analysis-job-matches">
+          <h4 className="analysis-job-matches__title">🚀 Jobs You Could Unlock With 1–2 More Skills</h4>
+          <p className="analysis-job-matches__subtitle">
+            Learn just a skill or two and you'd be competitive for these higher-value roles.
+          </p>
+          <div className="analysis-job-matches__list">
+            {analysis.apply_after_upskill.map((job, i) => (
+              <div key={i} className="analysis-job-card analysis-job-card--upskill">
+                <div className="analysis-job-card__header">
+                  <div>
+                    <span className="analysis-job-card__title">{job.title}</span>
+                    <span className="analysis-job-card__company"> @ {job.company}</span>
+                  </div>
+                  {job.link && (
+                    <a href={job.link} target="_blank" rel="noopener noreferrer" className="analysis-link-badge analysis-link-badge--alternate">
+                      View Role ↗
+                    </a>
+                  )}
+                </div>
+                {job.missing_skills?.length > 0 && (
+                  <div className="analysis-job-card__skills-gap">
+                    <span className="analysis-job-card__skills-label">Learn:</span>
+                    {job.missing_skills.map((s, j) => (
+                      <span key={j} className="analysis-job-card__skill-tag">{s}</span>
+                    ))}
+                  </div>
+                )}
+                <p className="analysis-job-card__reason">{job.why_worth_it}</p>
+                {job.estimated_salary && (
+                  <div className="analysis-salary-badge">💰 {job.estimated_salary}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {analysis.investors?.length > 0 && (
         <div className="analysis-investors">
           <h4 className="analysis-investors__title">🤝 Relevant Investors & Startup Funders</h4>

@@ -6,21 +6,9 @@ import StartupModeSelector from "./StartupModeSelector.jsx";
 import ContextIntake from "./ContextIntake.jsx";
 import ChatAdvisor from "./ChatAdvisor.jsx";
 import IdeaMeter from "./IdeaMeter.jsx";
-import AuthPage from "./AuthPage.jsx";
-import { AuthProvider, useAuth } from "./AuthContext.jsx";
 import "./styles.css";
 
-// Inner app — only shown when user is authenticated
-function AppInner() {
-  const { user, logOut } = useAuth();
-
-  // If not logged in, show auth page
-  if (!user) return <AuthPage />;
-
-  return <AppMain user={user} logOut={logOut} />;
-}
-
-function AppMain({ user, logOut }) {
+export default function App() {
   const [phase, setPhase] = useState("select");
   const [decisionType, setDecisionType] = useState(null);
   const [context, setContext] = useState(null);
@@ -81,7 +69,7 @@ function AppMain({ user, logOut }) {
 
   return (
     <>
-      <Nav theme={theme} onToggle={toggleTheme} user={user} onLogout={logOut} />
+      <Nav theme={theme} onToggle={toggleTheme} />
       <main className="app-shell">
         <div key={transitionKey} className="phase-enter" style={{ display: "contents" }}>
           {phase === "select" && (
@@ -113,13 +101,5 @@ function AppMain({ user, logOut }) {
       </main>
       <Footer onReset={handleReset} phase={phase} />
     </>
-  );
-}
-
-export default function App() {
-  return (
-    <AuthProvider>
-      <AppInner />
-    </AuthProvider>
   );
 }
