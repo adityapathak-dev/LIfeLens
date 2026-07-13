@@ -1,4 +1,6 @@
-const BASE = "/api";
+const BASE = import.meta.env.VITE_BACKEND_URL 
+  ? `${import.meta.env.VITE_BACKEND_URL.replace(/\/$/, "")}/api`
+  : "/api";
 
 export async function runReasoning(payload) {
   const res = await fetch(`${BASE}/reason`, {
