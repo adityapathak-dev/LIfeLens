@@ -86,13 +86,19 @@ export default function ContextIntake({ decisionType, onSubmit, onBack }) {
         if (!updated.targetDegree && userMemory.degreeInterests?.length > 0) {
           updated.targetDegree = userMemory.degreeInterests[0];
         }
+        if (!updated.role && userMemory.careerInterests?.length > 0) {
+          updated.role = userMemory.careerInterests[0];
+        }
+        if (!updated.skills && userMemory.skills?.length > 0) {
+          updated.skills = userMemory.skills.join(", ");
+        }
         if (!updated.riskTolerance && userMemory.riskTolerance) {
           updated.riskTolerance = userMemory.riskTolerance;
         }
         return updated;
       });
     }
-  }, [userMemory]);
+  }, [userMemory, decisionType]);
 
   const userCountryLower = (form.userCountry || "").trim().toLowerCase();
   const statePlaceholder = userCountryLower === "india" ? "e.g. Karnataka" : "e.g. California";

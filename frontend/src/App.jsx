@@ -165,6 +165,7 @@ function AppMain({ user, logOut }) {
       <MemoryManagerModal
         isOpen={isMemoryOpen}
         onClose={() => setIsMemoryOpen(false)}
+        initialTrack={decisionType}
       />
     </>
   );

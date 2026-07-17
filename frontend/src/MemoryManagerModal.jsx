@@ -1,26 +1,70 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
 
-export default function MemoryManagerModal({ isOpen, onClose }) {
+export default function MemoryManagerModal({ isOpen, onClose, initialTrack = "grad_school" }) {
   const { userMemory, saveUserMemory, clearUserMemory, toggleMemoryConsent } = useAuth();
 
+  // Helper to map track key to tab key
+  const getTabForTrack = (track) => {
+    if (track === "job") return "career";
+    if (track === "startup") return "startup";
+    return "education";
+  };
+
+  const [activeTab, setActiveTab] = useState(() => getTabForTrack(initialTrack));
   const [enabled, setEnabled] = useState(true);
-  const [careerInterests, setCareerInterests] = useState("");
+
+  // 🎓 Education Preferences
   const [degreeInterests, setDegreeInterests] = useState("");
+  const [examInterests, setExamInterests] = useState("");
   const [countryPreferences, setCountryPreferences] = useState("");
   const [budgetConstraints, setBudgetConstraints] = useState("");
+
+  // 💼 Career Preferences
+  const [careerInterests, setCareerInterests] = useState("");
+  const [skills, setSkills] = useState("");
+  const [industryInterests, setIndustryInterests] = useState("");
+  const [salaryExpectations, setSalaryExpectations] = useState("");
+
+  // 🚀 Startup Preferences
+  const [sectorInterests, setSectorInterests] = useState("");
   const [riskTolerance, setRiskTolerance] = useState(3);
+  const [fundingInterests, setFundingInterests] = useState("");
+  const [businessInterests, setBusinessInterests] = useState("");
+
   const [msg, setMsg] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+
+  const formatList = (val) => (Array.isArray(val) ? val.join(", ") : val || "");
+  const parseList = (val) => val.split(",").map((s) => s.trim()).filter(Boolean);
+
+  useEffect(() => {
+    if (initialTrack) {
+      setActiveTab(getTabForTrack(initialTrack));
+    }
+  }, [initialTrack, isOpen]);
 
   useEffect(() => {
     if (userMemory) {
       setEnabled(userMemory.enabled ?? true);
-      setCareerInterests(Array.isArray(userMemory.careerInterests) ? userMemory.careerInterests.join(", ") : userMemory.careerInterests || "");
-      setDegreeInterests(Array.isArray(userMemory.degreeInterests) ? userMemory.degreeInterests.join(", ") : userMemory.degreeInterests || "");
-      setCountryPreferences(Array.isArray(userMemory.countryPreferences) ? userMemory.countryPreferences.join(", ") : userMemory.countryPreferences || "");
+      
+      // Education
+      setDegreeInterests(formatList(userMemory.degreeInterests));
+      setExamInterests(formatList(userMemory.examInterests));
+      setCountryPreferences(formatList(userMemory.countryPreferences));
       setBudgetConstraints(userMemory.budgetConstraints || "");
-      setRiskTolerance(userMemory.riskTolerance || 3);
+
+      // Career
+      setCareerInterests(formatList(userMemory.careerInterests));
+      setSkills(formatList(userMemory.skills));
+      setIndustryInterests(formatList(userMemory.industryInterests));
+      setSalaryExpectations(userMemory.salaryExpectations || "");
+
+      // Startup
+      setSectorInterests(formatList(userMemory.sectorInterests));
+      setRiskTolerance(userMemory.riskTolerance ?? 3);
+      setFundingInterests(formatList(userMemory.fundingInterests));
+      setBusinessInterests(formatList(userMemory.businessInterests));
     }
   }, [userMemory, isOpen]);
 
@@ -40,11 +84,23 @@ export default function MemoryManagerModal({ isOpen, onClose }) {
       setIsSaving(true);
       const payload = {
         enabled,
-        careerInterests: careerInterests.split(",").map(s => s.trim()).filter(Boolean),
-        degreeInterests: degreeInterests.split(",").map(s => s.trim()).filter(Boolean),
-        countryPreferences: countryPreferences.split(",").map(s => s.trim()).filter(Boolean),
+        // Education
+        degreeInterests: parseList(degreeInterests),
+        examInterests: parseList(examInterests),
+        countryPreferences: parseList(countryPreferences),
         budgetConstraints: budgetConstraints.trim(),
-        riskTolerance: Number(riskTolerance)
+        
+        // Career
+        careerInterests: parseList(careerInterests),
+        skills: parseList(skills),
+        industryInterests: parseList(industryInterests),
+        salaryExpectations: salaryExpectations.trim(),
+
+        // Startup
+        sectorInterests: parseList(sectorInterests),
+        riskTolerance: Number(riskTolerance),
+        fundingInterests: parseList(fundingInterests),
+        businessInterests: parseList(businessInterests)
       };
       await saveUserMemory(payload);
       setMsg("✓ Decision Memory updated successfully.");
@@ -59,11 +115,21 @@ export default function MemoryManagerModal({ isOpen, onClose }) {
   const handleClear = async () => {
     if (window.confirm("Are you sure you want to delete all stored decision memory? This cannot be undone.")) {
       await clearUserMemory();
-      setCareerInterests("");
       setDegreeInterests("");
+      setExamInterests("");
       setCountryPreferences("");
       setBudgetConstraints("");
+
+      setCareerInterests("");
+      setSkills("");
+      setIndustryInterests("");
+      setSalaryExpectations("");
+
+      setSectorInterests("");
       setRiskTolerance(3);
+      setFundingInterests("");
+      setBusinessInterests("");
+
       setMsg("Decision Memory cleared.");
       setTimeout(() => setMsg(""), 3000);
     }
@@ -76,7 +142,7 @@ export default function MemoryManagerModal({ isOpen, onClose }) {
           <div>
             <h2 id="memory-title">🧠 Decision Memory & Consent Settings</h2>
             <p className="memory-subtitle">
-              Manage your saved decision preferences. LifeLens only stores decision-relevant parameters to streamline intake.
+              Manage decision-relevant preferences across all decision domains. LifeLens never forces a single identity—you may belong to multiple categories simultaneously.
             </p>
           </div>
           <button className="btn-close" onClick={onClose} title="Close Modal">✕</button>
@@ -89,7 +155,7 @@ export default function MemoryManagerModal({ isOpen, onClose }) {
           <div className="consent-info">
             <h4>Decision Memory Consent</h4>
             <p className="consent-desc">
-              When enabled, LifeLens remembers your target degree, budget caps, and country preferences to auto-fill future intake forms.
+              When enabled, LifeLens remembers your target degrees, roles, country preferences, and risk tolerance to auto-fill future intake forms.
             </p>
           </div>
           <label className="switch-toggle" title="Toggle Decision Memory Consent">
@@ -102,98 +168,226 @@ export default function MemoryManagerModal({ isOpen, onClose }) {
           </label>
         </div>
 
-        {/* ── PRIVACY TRANSPARENCY CARD ──────────────────────────────────── */}
-        <div className="transparency-box">
-          <div className="transparency-col allowed">
-            <h6>✅ WHAT IS STORED (Decision-Relevant):</h6>
-            <ul>
-              <li>Career & Degree interests</li>
-              <li>Country & location preferences</li>
-              <li>Budget caps & risk tolerance score</li>
-              <li>Saved journey snapshot counts</li>
-            </ul>
-          </div>
-          <div className="transparency-col forbidden">
-            <h6>🚫 WHAT IS NEVER STORED:</h6>
-            <ul>
-              <li>Unrelated personal conversation history</li>
-              <li>Sensitive identifiers or financial credentials</li>
-              <li>Raw AI chain-of-thought scratchpads</li>
-            </ul>
-          </div>
+        {/* ── DOMAIN CATEGORY TABS ────────────────────────────────────────── */}
+        <div className="memory-category-tabs">
+          <button
+            type="button"
+            className={`memory-tab-btn ${activeTab === "education" ? "active" : ""}`}
+            onClick={() => setActiveTab("education")}
+          >
+            🎓 Education Preferences
+          </button>
+          <button
+            type="button"
+            className={`memory-tab-btn ${activeTab === "career" ? "active" : ""}`}
+            onClick={() => setActiveTab("career")}
+          >
+            💼 Career Preferences
+          </button>
+          <button
+            type="button"
+            className={`memory-tab-btn ${activeTab === "startup" ? "active" : ""}`}
+            onClick={() => setActiveTab("startup")}
+          >
+            🚀 Startup Preferences
+          </button>
         </div>
 
         {/* ── EDITABLE MEMORY FORM ───────────────────────────────────────── */}
         <form className="memory-form" onSubmit={handleSave}>
-          <div className="form-grid">
-            <div className="form-field">
-              <label htmlFor="mem-degree">Degree / Course Interests:</label>
-              <input
-                id="mem-degree"
-                type="text"
-                className="input-text-sm"
-                placeholder="E.g. MS CS, MBA, B.Tech CSE"
-                value={degreeInterests}
-                onChange={(e) => setDegreeInterests(e.target.value)}
-                disabled={!enabled}
-              />
-            </div>
-
-            <div className="form-field">
-              <label htmlFor="mem-career">Career Roles / Industry Interests:</label>
-              <input
-                id="mem-career"
-                type="text"
-                className="input-text-sm"
-                placeholder="E.g. Software Engineer, Founder, Product"
-                value={careerInterests}
-                onChange={(e) => setCareerInterests(e.target.value)}
-                disabled={!enabled}
-              />
-            </div>
-
-            <div className="form-field">
-              <label htmlFor="mem-country">Country / Regional Preferences:</label>
-              <input
-                id="mem-country"
-                type="text"
-                className="input-text-sm"
-                placeholder="E.g. United States, India, Germany"
-                value={countryPreferences}
-                onChange={(e) => setCountryPreferences(e.target.value)}
-                disabled={!enabled}
-              />
-            </div>
-
-            <div className="form-field">
-              <label htmlFor="mem-budget">Budget / Savings Buffer Constraints:</label>
-              <input
-                id="mem-budget"
-                type="text"
-                className="input-text-sm"
-                placeholder="E.g. Self-funded up to $40k/yr, 6 months runway"
-                value={budgetConstraints}
-                onChange={(e) => setBudgetConstraints(e.target.value)}
-                disabled={!enabled}
-              />
-            </div>
-
-            <div className="form-field full-width">
-              <label htmlFor="mem-risk">Default Risk Tolerance (1 = Conservative, 5 = Aggressive):</label>
-              <input
-                id="mem-risk"
-                type="range"
-                min="1"
-                max="5"
-                value={riskTolerance}
-                onChange={(e) => setRiskTolerance(e.target.value)}
-                disabled={!enabled}
-              />
-              <div className="range-labels">
-                <span>1 (Conservative)</span>
-                <span>3 (Balanced: {riskTolerance})</span>
-                <span>5 (Aggressive)</span>
+          {/* 🎓 EDUCATION PREFERENCES TAB */}
+          {activeTab === "education" && (
+            <div className="form-grid category-pane">
+              <div className="form-field">
+                <label htmlFor="mem-degree">Target Degrees / Programmes:</label>
+                <input
+                  id="mem-degree"
+                  type="text"
+                  className="input-text-sm"
+                  placeholder="E.g. MS CS, MBA, B.Tech CSE"
+                  value={degreeInterests}
+                  onChange={(e) => setDegreeInterests(e.target.value)}
+                  disabled={!enabled}
+                />
               </div>
+
+              <div className="form-field">
+                <label htmlFor="mem-exams">Target Entrance Exams:</label>
+                <input
+                  id="mem-exams"
+                  type="text"
+                  className="input-text-sm"
+                  placeholder="E.g. GRE, JEE Advanced, CUET, SAT"
+                  value={examInterests}
+                  onChange={(e) => setExamInterests(e.target.value)}
+                  disabled={!enabled}
+                />
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="mem-country">Country / Study Regions:</label>
+                <input
+                  id="mem-country"
+                  type="text"
+                  className="input-text-sm"
+                  placeholder="E.g. United States, India, Germany"
+                  value={countryPreferences}
+                  onChange={(e) => setCountryPreferences(e.target.value)}
+                  disabled={!enabled}
+                />
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="mem-budget">Tuition & Living Budget Caps:</label>
+                <input
+                  id="mem-budget"
+                  type="text"
+                  className="input-text-sm"
+                  placeholder="E.g. Self-funded up to $40k/yr, Full scholarship target"
+                  value={budgetConstraints}
+                  onChange={(e) => setBudgetConstraints(e.target.value)}
+                  disabled={!enabled}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* 💼 CAREER PREFERENCES TAB */}
+          {activeTab === "career" && (
+            <div className="form-grid category-pane">
+              <div className="form-field">
+                <label htmlFor="mem-career">Target Roles / Positions:</label>
+                <input
+                  id="mem-career"
+                  type="text"
+                  className="input-text-sm"
+                  placeholder="E.g. Software Engineer, Product Manager, Data Scientist"
+                  value={careerInterests}
+                  onChange={(e) => setCareerInterests(e.target.value)}
+                  disabled={!enabled}
+                />
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="mem-skills">Key Skills & Tech Stack:</label>
+                <input
+                  id="mem-skills"
+                  type="text"
+                  className="input-text-sm"
+                  placeholder="E.g. React, Python, AWS, System Design"
+                  value={skills}
+                  onChange={(e) => setSkills(e.target.value)}
+                  disabled={!enabled}
+                />
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="mem-industry">Target Industries / Sectors:</label>
+                <input
+                  id="mem-industry"
+                  type="text"
+                  className="input-text-sm"
+                  placeholder="E.g. AI/DeepTech, FinTech, SaaS, HealthTech"
+                  value={industryInterests}
+                  onChange={(e) => setIndustryInterests(e.target.value)}
+                  disabled={!enabled}
+                />
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="mem-salary">Target Salary & Runway Expectations:</label>
+                <input
+                  id="mem-salary"
+                  type="text"
+                  className="input-text-sm"
+                  placeholder="E.g. $120k+ base, 6 months savings runway"
+                  value={salaryExpectations}
+                  onChange={(e) => setSalaryExpectations(e.target.value)}
+                  disabled={!enabled}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* 🚀 STARTUP PREFERENCES TAB */}
+          {activeTab === "startup" && (
+            <div className="form-grid category-pane">
+              <div className="form-field">
+                <label htmlFor="mem-sectors">Focus Venture Sectors:</label>
+                <input
+                  id="mem-sectors"
+                  type="text"
+                  className="input-text-sm"
+                  placeholder="E.g. Developer Tools, CleanTech, B2B SaaS"
+                  value={sectorInterests}
+                  onChange={(e) => setSectorInterests(e.target.value)}
+                  disabled={!enabled}
+                />
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="mem-funding">Funding Stage & Capital Interests:</label>
+                <input
+                  id="mem-funding"
+                  type="text"
+                  className="input-text-sm"
+                  placeholder="E.g. Bootstrapped, Pre-seed, Grants, Angel Network"
+                  value={fundingInterests}
+                  onChange={(e) => setFundingInterests(e.target.value)}
+                  disabled={!enabled}
+                />
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="mem-business">Business Model Interests:</label>
+                <input
+                  id="mem-business"
+                  type="text"
+                  className="input-text-sm"
+                  placeholder="E.g. Subscription SaaS, Marketplace, API Usage"
+                  value={businessInterests}
+                  onChange={(e) => setBusinessInterests(e.target.value)}
+                  disabled={!enabled}
+                />
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="mem-risk">Venture Risk Tolerance (1 = Low, 5 = High):</label>
+                <input
+                  id="mem-risk"
+                  type="range"
+                  min="1"
+                  max="5"
+                  value={riskTolerance}
+                  onChange={(e) => setRiskTolerance(e.target.value)}
+                  disabled={!enabled}
+                />
+                <div className="range-labels">
+                  <span>1 (Conservative)</span>
+                  <span>3 (Balanced: {riskTolerance})</span>
+                  <span>5 (Aggressive)</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── PRIVACY TRANSPARENCY SUMMARY ───────────────────────────────── */}
+          <div className="transparency-box">
+            <div className="transparency-col allowed">
+              <h6>✅ WHAT IS STORED (Decision-Relevant):</h6>
+              <ul>
+                <li>Education degrees, exams & country preferences</li>
+                <li>Career roles, skills & industry interests</li>
+                <li>Startup venture sectors, risk score & funding goals</li>
+              </ul>
+            </div>
+            <div className="transparency-col forbidden">
+              <h6>🚫 WHAT IS NEVER STORED:</h6>
+              <ul>
+                <li>Unrelated personal conversation history</li>
+                <li>Sensitive identifiers or financial credentials</li>
+                <li>Raw AI chain-of-thought scratchpads</li>
+              </ul>
             </div>
           </div>
 

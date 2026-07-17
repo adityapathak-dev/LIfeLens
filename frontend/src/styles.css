@@ -3836,6 +3836,44 @@ input:checked + .slider:before { transform: translateX(22px); }
 .btn-danger-outline { background: none; border: 1px solid #f87171; color: #f87171; border-radius: var(--r-s); padding: 6px 12px; cursor: pointer; font-size: 12px; }
 .btn-danger-outline:hover { background: rgba(248,113,113,0.1); }
 
+.memory-category-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+  background: var(--bg-1);
+  padding: 6px 12px;
+  border-radius: var(--r-m);
+}
+
+.memory-tab-btn {
+  background: none;
+  border: none;
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: var(--r-s);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.memory-tab-btn:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.memory-tab-btn.active {
+  color: #ffffff;
+  background: var(--accent);
+  box-shadow: 0 4px 12px rgba(99,102,241,0.25);
+}
+
+.category-pane {
+  animation: fadeIn 0.2s ease-out;
+}
+
+
 
 
 
