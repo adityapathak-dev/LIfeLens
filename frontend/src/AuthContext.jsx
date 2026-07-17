@@ -36,21 +36,44 @@ export function AuthProvider({ children }) {
   const [userMemory, setUserMemory] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
-      if (firebaseUser) {
-        const journeys = await getJourneys(firebaseUser.uid);
-        setUserJourneys(journeys);
-        const mem = await getUserMemory(firebaseUser.uid);
-        setUserMemory(mem);
-      } else {
-        setUserJourneys([]);
-        setActiveJourney(null);
-        setUserMemory(null);
-      }
+    // Safety timeout ensuring the app loads within 2 seconds even if Firebase is slow
+    const safetyTimer = setTimeout(() => {
       setLoading(false);
+    }, 2000);
+
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      try {
+        setUser(firebaseUser);
+        if (firebaseUser) {
+          try {
+            const journeys = await getJourneys(firebaseUser.uid);
+            setUserJourneys(journeys);
+          } catch (err) {
+            console.warn("[AuthContext] Could not fetch journeys:", err.message);
+          }
+          try {
+            const mem = await getUserMemory(firebaseUser.uid);
+            setUserMemory(mem);
+          } catch (err) {
+            console.warn("[AuthContext] Could not fetch memory:", err.message);
+          }
+        } else {
+          setUserJourneys([]);
+          setActiveJourney(null);
+          setUserMemory(null);
+        }
+      } catch (err) {
+        console.error("[AuthContext] Auth state error:", err.message);
+      } finally {
+        clearTimeout(safetyTimer);
+        setLoading(false);
+      }
     });
-    return unsubscribe;
+
+    return () => {
+      clearTimeout(safetyTimer);
+      unsubscribe();
+    };
   }, []);
 
   async function fetchUserMemory() {
@@ -170,9 +193,37 @@ export function AuthProvider({ children }) {
     deleteJourney: (jId) => deleteJourney(user?.uid, jId)
   };
 
+  if (loading) {
+    return (
+      <div style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: "100vh",
+        background: "var(--bg-1, #0b0f19)",
+        color: "var(--text, #f3f4f6)",
+        fontFamily: "var(--font-sans, sans-serif)",
+        gap: "16px"
+      }}>
+        <div style={{
+          width: "36px",
+          height: "36px",
+          border: "3px solid rgba(255,255,255,0.1)",
+          borderTopColor: "#6366f1",
+          borderRadius: "50%",
+          animation: "spin 0.8s linear infinite"
+        }} />
+        <span style={{ fontSize: "14px", color: "#9ca3af", fontWeight: 500 }}>
+          Loading LifeLens...
+        </span>
+      </div>
+    );
+  }
+
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }
