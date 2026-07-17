@@ -34,8 +34,8 @@ const ALLOWED_ORIGINS = (
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (curl, Postman, server-to-server)
-    if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+    // Allow requests with no origin, matched origins, or any .vercel.app deployment domain
+    if (!origin || ALLOWED_ORIGINS.includes(origin) || origin.endsWith(".vercel.app")) {
       return callback(null, true);
     }
     callback(new Error(`CORS: origin '${origin}' not allowed`));
@@ -129,4 +129,8 @@ app.use((err, req, res, _next) => {
 });
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`LifeLens backend listening on :${PORT}`));
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => console.log(`LifeLens backend listening on :${PORT}`));
+}
+
+export default app;
