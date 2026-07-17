@@ -7,6 +7,9 @@ import ContextIntake from "./ContextIntake.jsx";
 import ChatAdvisor from "./ChatAdvisor.jsx";
 import IdeaMeter from "./IdeaMeter.jsx";
 import AuthPage from "./AuthPage.jsx";
+import JourneyHub from "./JourneyHub.jsx";
+import HumanGuidanceModal from "./HumanGuidanceModal.jsx";
+import MemoryManagerModal from "./MemoryManagerModal.jsx";
 import { AuthProvider, useAuth } from "./AuthContext.jsx";
 import "./styles.css";
 
@@ -21,9 +24,15 @@ function AppInner() {
 }
 
 function AppMain({ user, logOut }) {
+  const { setActiveJourney } = useAuth();
   const [phase, setPhase] = useState("select");
   const [decisionType, setDecisionType] = useState(null);
   const [context, setContext] = useState(null);
+  const [isHubOpen, setIsHubOpen] = useState(false);
+  const [isGuidanceOpen, setIsGuidanceOpen] = useState(false);
+  const [isMemoryOpen, setIsMemoryOpen] = useState(false);
+  const [guidanceDomain, setGuidanceDomain] = useState("grad_school");
+  const [guidanceCountry, setGuidanceCountry] = useState("");
   const [transitionKey, setTransitionKey] = useState(0);
   const [theme, setTheme] = useState(
     () => localStorage.getItem("sb-theme") || "dark"
@@ -76,12 +85,35 @@ function AppMain({ user, logOut }) {
   function handleReset() {
     setDecisionType(null);
     setContext(null);
+    setActiveJourney(null);
     goTo("select");
+  }
+
+  function handleResumeJourney(journey) {
+    setActiveJourney(journey);
+    setDecisionType(journey.decisionType);
+    setContext(journey.context || {});
+    setIsHubOpen(false);
+    goTo("chat");
+  }
+
+  function handleOpenGuidance(domain = "grad_school", country = "") {
+    setGuidanceDomain(domain || decisionType || "grad_school");
+    setGuidanceCountry(country || context?.country || "");
+    setIsGuidanceOpen(true);
   }
 
   return (
     <>
-      <Nav theme={theme} onToggle={toggleTheme} user={user} onLogout={logOut} />
+      <Nav
+        theme={theme}
+        onToggle={toggleTheme}
+        user={user}
+        onLogout={logOut}
+        onOpenHub={() => setIsHubOpen(true)}
+        onOpenGuidance={() => handleOpenGuidance(decisionType, context?.country)}
+        onOpenMemory={() => setIsMemoryOpen(true)}
+      />
       <main className="app-shell">
         <div key={transitionKey} className="phase-enter" style={{ display: "contents" }}>
           {phase === "select" && (
@@ -104,6 +136,7 @@ function AppMain({ user, logOut }) {
               decisionType={decisionType}
               context={context}
               onReset={handleReset}
+              onOpenGuidance={handleOpenGuidance}
             />
           )}
           {phase === "idea_meter" && (
@@ -112,6 +145,27 @@ function AppMain({ user, logOut }) {
         </div>
       </main>
       <Footer onReset={handleReset} phase={phase} />
+
+      {/* ── DECISION JOURNEYS HUB MODAL ────────────────────────────── */}
+      <JourneyHub
+        isOpen={isHubOpen}
+        onClose={() => setIsHubOpen(false)}
+        onResumeJourney={handleResumeJourney}
+      />
+
+      {/* ── HUMAN GUIDANCE DIRECTORY MODAL ─────────────────────────── */}
+      <HumanGuidanceModal
+        isOpen={isGuidanceOpen}
+        onClose={() => setIsGuidanceOpen(false)}
+        initialDomain={guidanceDomain}
+        initialCountry={guidanceCountry}
+      />
+
+      {/* ── DECISION MEMORY SETTINGS MODAL ─────────────────────────── */}
+      <MemoryManagerModal
+        isOpen={isMemoryOpen}
+        onClose={() => setIsMemoryOpen(false)}
+      />
     </>
   );
 }

@@ -10,9 +10,10 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB max
   fileFilter: (req, file, cb) => {
-    const allowed = ["application/pdf", "text/plain", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/msword"];
+    // ─ SECURITY: Validate by extension ONLY (OWASP A04)
+    // Do NOT trust the client-supplied MIME type — it can be spoofed.
     const ext = file.originalname.split(".").pop().toLowerCase();
-    if (allowed.includes(file.mimetype) || ["pdf", "txt", "docx", "doc"].includes(ext)) {
+    if (["pdf", "txt", "docx", "doc"].includes(ext)) {
       cb(null, true);
     } else {
       cb(new Error("Only PDF, TXT, or DOCX files are supported."));
@@ -451,16 +452,17 @@ router.post("/resume/check", async (req, res) => {
     targetRole: req.body.targetRole
   });
 
-  const { parsedResume, targetRole } = req.body;
+  const { parsedResume, targetRole: rawTargetRole } = req.body;
+
+  // ─ SECURITY: Sanitize and cap targetRole (OWASP A03 — Injection)
+  const targetRole = typeof rawTargetRole === "string"
+    ? rawTargetRole.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").trim().slice(0, 200)
+    : "";
 
   if (!parsedResume || !parsedResume.resumeText || parsedResume.resumeText.trim().length < 50) {
     console.warn("[resumeRoute/check] Validation failed: Missing parsedResume or resumeText");
     return res.status(400).json({
       error: "Structured parsedResume object with resumeText is required.",
-      diagnostics: {
-        stage: "Payload validation",
-        message: `parsedResume present: ${!!parsedResume}, resumeText length: ${parsedResume?.resumeText?.trim().length || 0}`
-      }
     });
   }
 

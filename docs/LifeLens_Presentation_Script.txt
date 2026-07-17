@@ -1,0 +1,218 @@
+===================================================
+LIFELENS — PRESENTATION SCRIPT FOR CLAUDE
+Hackathon: HackHazards '26 | Team: NavaVDhara
+Live Demo: https://life-lens-chat.base44.app/
+GitHub: https://github.com/adityapathak-dev/LIfeLens
+===================================================
+
+INSTRUCTIONS FOR CLAUDE:
+Build a stunning, modern, dark-themed slide presentation using these slides.
+Use a dark navy/black background with vibrant accent colors (purple, electric blue, neon green).
+Each slide should feel premium, minimal, and impactful — no walls of text.
+Use large bold headings, clean icons/emojis, and short punchy bullet points.
+Add smooth transitions between slides.
+
+===================================================
+SLIDE 1 — COVER SLIDE
+===================================================
+
+[CENTERED, FULL SCREEN]
+
+LIFELENS
+"AI-Powered Life Decision Advisor"
+
+Tagline:
+"Every major life decision deserves more than a Google search."
+
+Live App → https://life-lens-chat.base44.app/
+GitHub   → https://github.com/adityapathak-dev/LIfeLens
+
+Team: NavaVDhara
+Members: Aditya Pathak, Tejas Dadhich, Parth Sarthi, Mayank Rajput
+
+HackHazards '26 | May 1 – July 13, 2026
+
+===================================================
+SLIDE 2 — THE PROBLEM
+===================================================
+
+[LEFT ALIGNED HEADING | RIGHT SIDE: LARGE EMOJI ILLUSTRATION]
+
+HEADING: The Problem With Life Decisions Today
+
+Every year, millions of students face questions like:
+• "Should I take this job offer or do my Masters?"
+• "Is my startup idea worth quitting college for?"
+• "Which university should I apply to based on my JEE score?"
+
+Existing tools fail them:
+❌ Generic Google searches return one-size-fits-all advice
+❌ AI chatbots give confident but fabricated information
+❌ No tool considers their REAL situation — savings, risk tolerance, score cutoffs, local job market
+
+Result: Bad decisions made on bad information.
+
+===================================================
+SLIDE 3 — THE SOLUTION
+===================================================
+
+[CENTERED, BOLD]
+
+HEADING: Introducing LifeLens
+
+LifeLens is an AI-powered conversational decision engine that:
+
+✅ Collects your real context (scores, savings, location, goals)
+✅ Runs a structured multi-turn AI consultation
+✅ Produces a personalized Decision Dossier with tradeoffs, alternatives, and action plans
+✅ Connects you to real human counselors if emotional distress is detected
+
+"Not just an answer — a structured reasoning journey."
+
+===================================================
+SLIDE 4 — THREE CORE ADVISORS
+===================================================
+
+[THREE COLUMN CARD LAYOUT]
+
+Card 1 — 🎓 Graduate College Advisor
+• Enter your score (JEE, SAT, GRE, GMAT etc.)
+• Select your target country and degree
+• Get: target colleges, safety schools, admission timelines, and official links
+
+Card 2 — 💼 Job Advisor + ATS Resume Checker
+• Upload your resume (PDF/DOCX)
+• AI evaluates it strictly — no score inflation
+• Get: "Apply Now" job list + "Unlock in 3-6 months" roadmap with missing skills and salary in LPA
+
+Card 3 — 🚀 Startup Advisor + Idea Meter
+• Submit your startup idea and sector
+• Get scored on market fit, defensibility, and execution
+• If score ≥ 50: Matched with real investor names and links
+
+===================================================
+SLIDE 5 — HOW IT WORKS (ARCHITECTURE)
+===================================================
+
+[CENTER — CLEAN FLOW DIAGRAM]
+
+HEADING: Under The Hood
+
+[ User Fills Context Form ]
+        ↓
+[ Express Backend Validates + Builds System Prompt ]
+        ↓
+[ Sarvam AI / OpenAI / Groq LLM Responds ]
+        ↓
+[ Structured JSON Parsed & Rendered as Dossier ]
+        ↓
+[ If Distress Detected → Counselor Card Shown ]
+        ↓
+[ Firebase Auth → Session Verified ]
+
+Tech Stack:
+• Frontend: React + Vite + Vanilla CSS
+• Backend: Node.js + Express
+• AI Models: OpenAI GPT-4o-mini, Groq Llama-3.3-70B, Sarvam AI (Indic LLM)
+• Auth: Firebase Authentication (Google + Email)
+• Deployment: Vercel + Render (Production) / Base44 (Live)
+
+===================================================
+SLIDE 6 — SARVAM AI INTEGRATION
+===================================================
+
+[LEFT: INDIA FLAG ICON | RIGHT: TEXT]
+
+HEADING: Built for India, Powered by Sarvam AI
+
+LifeLens integrates Sarvam AI as its Indic-language layer.
+This means the app can understand and respond in:
+Hindi, Tamil, Telugu, Kannada, Bengali, Marathi
+
+Use Cases:
+• Students who describe their situation in Hindi get responses in Hindi
+• Resume parsing handles mixed Indic-English content accurately
+• Decision dossiers are translated dynamically to user's native language
+
+Endpoint: https://api.sarvam.ai/v1/chat/completions
+Model: sarvam-2b-v0.5
+
+===================================================
+SLIDE 7 — LIVE DEMO HIGHLIGHTS
+===================================================
+
+[SCREENSHOT PLACEHOLDER SLIDE — 3 PANELS SIDE BY SIDE]
+
+HEADING: See It In Action
+
+Panel 1: Graduate College Advisor
+→ User enters JEE score 85 percentile, target: India, B.Tech
+→ App returns: NIT Warangal, BITS Pilani, VIT Vellore with links
+
+Panel 2: ATS Resume Checker
+→ User uploads resume → Strict scoring (no inflation)
+→ "Project Quality: 32/100 — basic todo app does not impress recruiters"
+→ Apply Now: SDE Intern at Razorpay (₹6-8 LPA)
+
+Panel 3: Idea Meter
+→ Startup: "AI tutor for Tier 2 cities"
+→ Score: 72/100
+→ Investors shown: Blume Ventures, Surge (Sequoia India), Y Combinator
+
+Live Demo: https://life-lens-chat.base44.app/
+
+===================================================
+SLIDE 8 — WHAT MAKES US DIFFERENT
+===================================================
+
+[CENTER — COMPARISON TABLE]
+
+HEADING: LifeLens vs. The Rest
+
+| Feature                          | ChatGPT | Google | LifeLens |
+|----------------------------------|---------|--------|----------|
+| Context-aware (your real score)  | ❌      | ❌     | ✅       |
+| Multilingual Indic support       | ❌      | ✅     | ✅       |
+| Resume evaluation (strict)       | ❌      | ❌     | ✅       |
+| Investor matching (startup)      | ❌      | ❌     | ✅       |
+| Human counselor fallback         | ❌      | ❌     | ✅       |
+| Decision Dossier with tradeoffs  | ❌      | ❌     | ✅       |
+
+===================================================
+SLIDE 9 — IMPACT & NUMBERS
+===================================================
+
+[LARGE STATS — 3 BIG NUMBERS CENTERED]
+
+HEADING: Built for Scale
+
+🌍  50+ Countries  Supported in college & exam discovery
+📚  200+ Exams     Mapped across India, US, UK, Canada, Australia
+💼  Real Job Links Provided for each recommendation
+🧠  3 AI Providers Integrated (OpenAI, Groq, Sarvam AI)
+🔐  Secure Auth   Firebase Sign-in with persistent user session memory
+📊  Zero Inflation Strict resume scoring — honest feedback only
+
+===================================================
+SLIDE 10 — CLOSING SLIDE
+===================================================
+
+[FULL SCREEN — CENTERED — BOLD]
+
+HEADING: Life Is Full of Hard Choices.
+SUBHEADING: LifeLens Makes Them Easier.
+
+"We built this because every student deserves a structured,
+honest second opinion — not just a confident chatbot guess."
+
+🔗 Try it now: https://life-lens-chat.base44.app/
+📁 GitHub: https://github.com/adityapathak-dev/LIfeLens
+
+Team NavaVDhara
+Aditya Pathak | Tejas Dadhich | Parth Sarthi | Mayank Rajput
+
+Thank You ✨
+
+===================================================
+END OF PRESENTATION SCRIPT
+===================================================

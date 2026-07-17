@@ -1,4 +1,3 @@
-
 {
   "name": "second-brain-backend",
   "version": "1.0.0",
@@ -13,9 +12,12 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "express-rate-limit": "^8.5.2",
+    "helmet": "^8.3.0",
     "mammoth": "^1.12.0",
     "multer": "^2.2.0",
     "openai": "^4.55.0",
-    "pdf-parse": "^2.2.2"
+    "pdf-parse": "^2.2.2",
+    "validator": "^13.15.35"
   }
 }

@@ -147,9 +147,11 @@ CRITICAL OUTPUT RULE: Respond ONLY with a single valid JSON object. No markdown 
  * Returns dynamic list of exams and pathways or country validation error.
  */
 router.post("/exams/discover", async (req, res) => {
-  const { country, category, degree } = req.body;
+  const rawCountry = req.body.country;
+  const rawCategory = req.body.category;
+  const rawDegree = req.body.degree;
 
-  if (!country || country.trim().length < 2) {
+  if (typeof rawCountry !== "string" || rawCountry.trim().length < 2) {
     return res.json({
       valid_country: false,
       error: "Please enter a valid country name.",
@@ -158,6 +160,15 @@ router.post("/exams/discover", async (req, res) => {
       visa_requirements: []
     });
   }
+
+  // ── INPUT SANITIZATION (OWASP A03 — Injection) ────────────────────────────────
+  const country = rawCountry.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").trim().slice(0, 100);
+  const category = typeof rawCategory === "string" 
+    ? rawCategory.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").trim().slice(0, 100) 
+    : "";
+  const degree = typeof rawDegree === "string" 
+    ? rawDegree.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").trim().slice(0, 100) 
+    : "";
 
   try {
     const normCountry = getNormalizedCountryName(country);
@@ -248,7 +259,7 @@ router.post("/exams/discover", async (req, res) => {
 
     return res.json(parsed);
   } catch (err) {
-    console.error("[examDiscoveryRoute] Error:", err);
+    console.error("[examDiscoveryRoute] Error:", err.message);
     return res.status(500).json({ error: "Failed to perform exam discovery." });
   }
 });

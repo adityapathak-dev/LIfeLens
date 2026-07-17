@@ -1,7 +1,15 @@
 import React from "react";
 import logoImg from "./assets/logo.jpg";
 
-export default function Nav({ theme, onToggle, user, onLogout }) {
+export default function Nav({
+  theme = "dark",
+  onToggle = () => {},
+  user = null,
+  onLogout = () => {},
+  onOpenHub = () => {},
+  onOpenGuidance = () => {},
+  onOpenMemory = () => {}
+}) {
   return (
     <header className="app-nav" role="banner">
       <div className="nav-inner">
@@ -16,6 +24,42 @@ export default function Nav({ theme, onToggle, user, onLogout }) {
         </div>
 
         <div className="nav-right">
+          {/* Decision Journeys Hub Button */}
+          {user && (
+            <button
+              className="nav-hub-btn"
+              onClick={onOpenHub}
+              type="button"
+              title="Open Decision Journeys Hub"
+            >
+              🧭 Decision Journeys
+            </button>
+          )}
+
+          {/* Decision Memory Settings Button */}
+          {user && (
+            <button
+              className="nav-memory-btn"
+              onClick={onOpenMemory}
+              type="button"
+              title="Open Decision Memory Settings"
+            >
+              🧠 Memory
+            </button>
+          )}
+
+          {/* Human Guidance Directory Button */}
+          {user && (
+            <button
+              className="nav-guidance-btn"
+              onClick={onOpenGuidance}
+              type="button"
+              title="Open Human Guidance Directory"
+            >
+              🤝 Human Advisors
+            </button>
+          )}
+
           {/* User info + logout */}
           {user && (
             <div className="nav-user">

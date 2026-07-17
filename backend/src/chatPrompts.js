@@ -39,7 +39,14 @@ Analysis response (after covering all critical factors including exam score):
         "key_risk": "The single biggest uncertainty or downside",
         "key_assumption": "What must be true for this path to work well",
         "confidence": "low",
-        "college_note": "One honest sentence on this college's reputation and actual ranking for the user's stream — be direct, not diplomatic"
+        "college_note": "One honest sentence on this college's reputation and actual ranking for the user's stream — be direct, not diplomatic",
+        "explainability": {
+          "influencing_inputs": ["JEE Main percentile 68%", "Target degree B.Tech", "Self-funded budget"],
+          "assumptions_used": ["Assumes no state reservation quota applies"],
+          "missing_information": ["Specific branch preference priority"],
+          "confidence_rationale": "Assigned Medium confidence because exam cutoff ranges match, but exact financial cap was omitted.",
+          "sensitivity_factors": ["If JEE score increases above 85th percentile, top NIT alternatives become available."]
+        }
       }
     ],
     "hidden_tradeoffs": [
@@ -121,7 +128,14 @@ Analysis response (after covering all critical factors):
         "key_risk": "The single biggest uncertainty or downside",
         "key_assumption": "What must be true for this path to work well",
         "confidence": "low",
-        "college_note": "One honest sentence on this company's reputation, growth trajectory, and how good it is for their specific skill set"
+        "college_note": "One honest sentence on this company's reputation, growth trajectory, and how good it is for their specific skill set",
+        "explainability": {
+          "influencing_inputs": ["Skills: React, Node.js", "Target role: Software Engineer", "Location: India"],
+          "assumptions_used": ["Assumes entry-level full-time position without relocation stipend"],
+          "missing_information": ["Current notice period duration"],
+          "confidence_rationale": "Assigned High confidence as skills match role requirements directly.",
+          "sensitivity_factors": ["Gaining 1 year of production Node.js experience unlocks senior scale tier roles."]
+        }
       }
     ],
     "hidden_tradeoffs": [
@@ -216,6 +230,19 @@ Analysis response (after covering all critical factors):
   "is_analysis": true,
   "analysis": {
     "summary": "2–3 sentence synthesis of the person's specific situation",
+    "verified_observations": [
+      "Runway: 6 months ($40,000 buffer)",
+      "Team: 2 technical co-founders",
+      "Field: B2B SaaS"
+    ],
+    "explicit_assumptions": [
+      "Assumes Customer Acquisition Cost (CAC) remains below $150 via organic inbound",
+      "Assumes MVP can be completed within 6 weeks without external hiring"
+    ],
+    "critical_unknowns": [
+      "Month 3 user retention cohort percentage",
+      "Willingness of target SMBs to pay above $49/month"
+    ],
     "options": [
       {
         "label": "Option name (startup path or corporate alternative)",
@@ -224,7 +251,14 @@ Analysis response (after covering all critical factors):
         "key_risk": "The single biggest uncertainty or downside",
         "key_assumption": "What must be true for this path to work well",
         "confidence": "low",
-        "college_note": "One honest sentence on the company/startup's market position and viability"
+        "college_note": "One honest sentence on the company/startup's market position and viability",
+        "explainability": {
+          "influencing_inputs": ["Savings runway: 6 months", "Risk tolerance: 3/5", "Industry: SaaS"],
+          "assumptions_used": ["Assumes founder can launch MVP without external engineering hires"],
+          "missing_information": ["Target Customer Lifetime Value (LTV) estimates"],
+          "confidence_rationale": "Assigned Medium confidence due to clear runway data but unverified CAC metrics.",
+          "sensitivity_factors": ["Securing 10 paying pre-launch LOIs increases confidence to High."]
+        }
       }
     ],
     "hidden_tradeoffs": [
@@ -268,6 +302,8 @@ Analysis response (after covering all critical factors):
 }
 
 Rules for the startup analysis:
+- STRICT NON-SPECULATION DIRECTIVE: You must NEVER state or imply that the startup will succeed, achieve product-market fit, or secure funding. Never claim certainty.
+- EPISTEMOLOGICAL SEPARATION: Separately group verified facts into "verified_observations", unproven hypotheses into "explicit_assumptions", and missing data gaps into "critical_unknowns".
 - confidence must be exactly one of: "low", "medium", "high"
 - options must include every path the user mentioned
 - hidden_tradeoffs must have at least 2 items

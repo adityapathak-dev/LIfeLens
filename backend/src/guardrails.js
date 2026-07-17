@@ -13,9 +13,24 @@ const FORBIDDEN_RECOMMENDATION_PATTERNS = [
   /i would (choose|pick|go)/i,
 ];
 
+export function stripInternalCoT(obj) {
+  if (!obj || typeof obj !== "object") return obj;
+  if (Array.isArray(obj)) {
+    return obj.map(stripInternalCoT);
+  }
+  const forbiddenKeys = ["chain_of_thought", "cot", "internal_reasoning", "thinking", "scratchpad", "system_cot"];
+  const cleaned = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (!forbiddenKeys.includes(key.toLowerCase())) {
+      cleaned[key] = stripInternalCoT(value);
+    }
+  }
+  return cleaned;
+}
+
 /**
- * Guardrail 2: scans all free-text fields in the parsed response for
- * recommendation language. Returns true if a violation is found.
+ * Guardrail 2: scans all free-text fields (including explainability fields) in the
+ * parsed response for recommendation language. Returns true if a violation is found.
  */
 export function containsRecommendationLanguage(parsed) {
   const stringsToCheck = [];
@@ -24,7 +39,23 @@ export function containsRecommendationLanguage(parsed) {
   (parsed.projections || []).forEach((p) => {
     stringsToCheck.push(p.short_term_outcome, p.long_term_outcome, p.key_risk, p.key_assumption);
   });
-  (parsed.hidden_tradeoffs || []).forEach((t) => stringsToCheck.push(t));
+  (parsed.hidden_tradeoffs || []).forEach((t) => {
+    if (typeof t === "string") stringsToCheck.push(t);
+    else if (t && typeof t === "object") stringsToCheck.push(t.description);
+  });
+
+  // Also scan explainability blocks inside options
+  (parsed.options || []).forEach((opt) => {
+    stringsToCheck.push(opt.short_term, opt.long_term, opt.key_risk, opt.key_assumption, opt.college_note);
+    if (opt.explainability) {
+      const exp = opt.explainability;
+      (exp.influencing_inputs || []).forEach((s) => stringsToCheck.push(s));
+      (exp.assumptions_used || []).forEach((s) => stringsToCheck.push(s));
+      (exp.missing_information || []).forEach((s) => stringsToCheck.push(s));
+      (exp.sensitivity_factors || []).forEach((s) => stringsToCheck.push(s));
+      if (exp.confidence_rationale) stringsToCheck.push(exp.confidence_rationale);
+    }
+  });
 
   const joined = stringsToCheck.filter(Boolean).join(" \n ");
   return FORBIDDEN_RECOMMENDATION_PATTERNS.some((pattern) => pattern.test(joined));
@@ -84,10 +115,11 @@ export function injectDisclaimer(parsed) {
  * Full guardrail pipeline. Returns { safe: boolean, data: object, retriedReason?: string }
  */
 export function runGuardrails(parsed, requestPayload) {
-  if (containsRecommendationLanguage(parsed)) {
-    return { safe: false, data: parsed, retriedReason: "recommendation_language_detected" };
+  const sanitized = stripInternalCoT(parsed);
+  if (containsRecommendationLanguage(sanitized)) {
+    return { safe: false, data: sanitized, retriedReason: "recommendation_language_detected" };
   }
-  const withConfidence = applyConfidenceOverride(parsed, requestPayload);
+  const withConfidence = applyConfidenceOverride(sanitized, requestPayload);
   const withDisclaimer = injectDisclaimer(withConfidence);
   return { safe: true, data: withDisclaimer };
 }

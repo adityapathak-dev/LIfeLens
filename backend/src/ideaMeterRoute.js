@@ -143,19 +143,32 @@ function generateLocalIdeaMeterFallback(idea, field) {
 }
 
 router.post("/idea-meter", async (req, res) => {
-  const { idea, field, answers } = req.body;
+  const rawIdea = req.body.idea;
+  const rawField = req.body.field;
+  const rawAnswers = req.body.answers;
 
-  if (!idea || idea.trim().length < 10) {
+  if (typeof rawIdea !== "string" || rawIdea.trim().length < 10) {
     return res.status(400).json({ error: "Please describe your startup idea in at least a sentence." });
   }
 
+  // ── INPUT SANITIZATION (OWASP A03 — Injection) ────────────────────────────────
+  const idea = rawIdea.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").trim().slice(0, 2000);
+  const field = typeof rawField === "string" 
+    ? rawField.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").trim().slice(0, 100) 
+    : "other";
+
   try {
-    let userPromptContent = `Startup Industry Field: ${field || "other"}\n\nHere is my startup idea:\n\n${idea.trim()}`;
+    let userPromptContent = `Startup Industry Field: ${field}\n\nHere is my startup idea:\n\n${idea}`;
     
-    if (Array.isArray(answers) && answers.length > 0) {
+    if (Array.isArray(rawAnswers) && rawAnswers.length > 0) {
       userPromptContent += "\n\nHere are the answers to the clarifying questions you asked:\n";
-      answers.forEach(a => {
-        userPromptContent += `Question: ${a.question}\nAnswer: ${a.answer}\n\n`;
+      // Limit to 5 answers maximum to prevent prompt bloat / resource exhaustion
+      rawAnswers.slice(0, 5).forEach(a => {
+        if (a && typeof a === "object" && typeof a.question === "string" && typeof a.answer === "string") {
+          const q = a.question.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").trim().slice(0, 300);
+          const ans = a.answer.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").trim().slice(0, 500);
+          userPromptContent += `Question: ${q}\nAnswer: ${ans}\n\n`;
+        }
       });
     }
 
@@ -182,7 +195,8 @@ router.post("/idea-meter", async (req, res) => {
 
     return res.json(parsed);
   } catch (err) {
-    console.error("[ideaMeterRoute] Critical fallback error:", err);
+    // Hide internal error details
+    console.error("[ideaMeterRoute] Critical fallback error:", err.message);
     const ultimateFallback = generateLocalIdeaMeterFallback(idea, field);
     return res.json(ultimateFallback);
   }

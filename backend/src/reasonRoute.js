@@ -11,6 +11,50 @@ const SYSTEM_PROMPT = fs.readFileSync(path.join(__dirname, "system_prompt.txt"),
 
 const router = express.Router();
 
+// ── INPUT VALIDATION (OWASP A03 — Injection, A04 — Insecure Design) ───────────
+const MAX_LABEL_LEN    = 100;
+const MAX_NOTE_LEN     = 1000;
+const MAX_PATHS        = 5;
+
+function sanitizeStr(val, maxLen) {
+  if (typeof val !== "string") return "";
+  // Strip control characters, then trim & truncate
+  return val.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").trim().slice(0, maxLen);
+}
+
+function validateReasonBody(body) {
+  const errors = [];
+
+  if (!Array.isArray(body?.paths)) {
+    errors.push("paths must be an array.");
+  } else {
+    if (body.paths.length < 2) errors.push("At least two paths are required.");
+    if (body.paths.length > MAX_PATHS) errors.push(`A maximum of ${MAX_PATHS} paths is supported.`);
+
+    body.paths.forEach((p, i) => {
+      if (typeof p?.label !== "string" || p.label.trim().length === 0)
+        errors.push(`paths[${i}].label must be a non-empty string.`);
+      // Sanitize in-place
+      p.label     = sanitizeStr(p.label, MAX_LABEL_LEN);
+      p.user_note = sanitizeStr(p.user_note ?? "", MAX_NOTE_LEN);
+    });
+  }
+
+  if (body?.constraints !== undefined && typeof body.constraints !== "object") {
+    errors.push("constraints must be an object.");
+  }
+
+  if (body?.constraints) {
+    const { risk_tolerance, financial_runway_months } = body.constraints;
+    if (risk_tolerance !== undefined && (typeof risk_tolerance !== "number" || risk_tolerance < 0 || risk_tolerance > 10))
+      errors.push("constraints.risk_tolerance must be a number between 0 and 10.");
+    if (financial_runway_months !== undefined && (typeof financial_runway_months !== "number" || financial_runway_months < 0 || financial_runway_months > 600))
+      errors.push("constraints.financial_runway_months must be a number between 0 and 600.");
+  }
+
+  return errors;
+}
+
 function safeParseJSON(text) {
   // Strip accidental markdown fences in case the model adds them despite instructions.
   const cleaned = text.replace(/```json|```/g, "").trim();
@@ -67,8 +111,10 @@ function generateLocalReasoningFallback(requestPayload) {
 router.post("/reason", async (req, res) => {
   const requestPayload = req.body;
 
-  if (!requestPayload?.paths || requestPayload.paths.length < 2) {
-    return res.status(400).json({ error: "At least two paths are required." });
+  // Validate + sanitize all user input before touching LLM
+  const validationErrors = validateReasonBody(requestPayload);
+  if (validationErrors.length > 0) {
+    return res.status(400).json({ error: validationErrors.join(" ") });
   }
 
   try {
@@ -111,6 +157,7 @@ router.post("/reason", async (req, res) => {
 
     return res.json(result.data);
   } catch (err) {
+    // Never expose internal error details to the client
     console.error("[reasonRoute] Critical fallback exception:", err);
     recordFallback();
     const ultimateFallback = generateLocalReasoningFallback(requestPayload);

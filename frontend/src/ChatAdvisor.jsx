@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { sendChatMessage } from "./api.js";
 import ConfidenceStamp from "./ConfidenceStamp.jsx";
 import { FIELD_OPTS } from "./ContextIntake.jsx";
+import { useAuth } from "./AuthContext.jsx";
+import ExplainabilityDrawer from "./ExplainabilityDrawer.jsx";
+import StartupAssessmentView from "./StartupAssessmentView.jsx";
 import logoImg from "./assets/logo.jpg";
 
 const LABELS = {
@@ -68,7 +71,7 @@ function buildContextMessage(decisionType, context) {
   return "I need help thinking through an important decision.";
 }
 
-function StreamingMessage({ content, parsed, onComplete }) {
+function StreamingMessage({ content, parsed, decisionType, onComplete }) {
   const [wordCount, setWordCount] = useState(0);
   const words = useMemo(() => content.split(" "), [content]);
 
@@ -98,7 +101,7 @@ function StreamingMessage({ content, parsed, onComplete }) {
         ))}
       </p>
       {wordCount >= words.length && parsed?.is_analysis && parsed.analysis && (
-        <AnalysisBlock analysis={parsed.analysis} />
+        <AnalysisBlock analysis={parsed.analysis} decisionType={decisionType} />
       )}
     </>
   );
@@ -106,7 +109,7 @@ function StreamingMessage({ content, parsed, onComplete }) {
 
 /* ─── Main chat component ─────────────────────────────────────── */
 
-export default function ChatAdvisor({ decisionType, context, onReset }) {
+export default function ChatAdvisor({ decisionType, context, onReset, onOpenGuidance }) {
   const [history, setHistory] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -296,6 +299,7 @@ export default function ChatAdvisor({ decisionType, context, onReset }) {
                   <StreamingMessage
                     content={msg.content}
                     parsed={msg.parsed}
+                    decisionType={decisionType}
                     onComplete={() => {
                       setHistory((prev) =>
                         prev.map((m) => (m.id === msg.id ? { ...m, isStreaming: false } : m))
@@ -306,7 +310,7 @@ export default function ChatAdvisor({ decisionType, context, onReset }) {
                   <>
                     <p className="msg-text">{msg.content}</p>
                     {msg.parsed?.is_analysis && msg.parsed.analysis && (
-                      <AnalysisBlock analysis={msg.parsed.analysis} />
+                      <AnalysisBlock analysis={msg.parsed.analysis} decisionType={decisionType} />
                     )}
                   </>
                 )}
@@ -336,22 +340,22 @@ export default function ChatAdvisor({ decisionType, context, onReset }) {
         <div ref={bottomRef} />
       </div>
 
-      {/* ── Counselor prompt (after analysis) ── */}
-      {hasAnalysis && !showCounselor && (
-        <div className="counselor-prompt">
-          <p>Still unsure? A real counsellor can help you work through this.</p>
+      {/* ── Human Guidance Directory Escalation Banner (Non-Mandatory) ── */}
+      {hasAnalysis && (
+        <div className="counselor-prompt glass-card">
+          <div className="escalation-info">
+            <p>🤝 <strong>Need 1-on-1 Human Advice?</strong> Connect with certified {decisionType === "startup" ? "Startup Mentors & Incubators" : decisionType === "job" ? "Career Counselors" : "Admissions Advisors"}.</p>
+            <span className="subtext">Optional consultation matched by domain and region. AI advice never replaces professional council.</span>
+          </div>
           <button
             type="button"
-            id="btn-counselor"
             className="counselor-trigger-btn"
-            onClick={() => setShowCounselor(true)}
+            onClick={() => onOpenGuidance?.(decisionType, context?.country)}
           >
-            Connect me with a counsellor →
+            Browse Human Guidance Directory →
           </button>
         </div>
       )}
-
-      {showCounselor && counselor && <CounselorCard counselor={counselor} />}
 
       {/* ── Suggestions Row ── */}
       {showSuggestions && (
@@ -408,12 +412,61 @@ export default function ChatAdvisor({ decisionType, context, onReset }) {
 
 /* ─── Inline analysis block ──────────────────────────────────── */
 
-function AnalysisBlock({ analysis }) {
+function AnalysisBlock({ analysis, decisionType }) {
+  const { user, saveDossier, activeJourney } = useAuth();
+  const [userNote, setUserNote] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState("");
+
+  const handleSaveSnapshot = async () => {
+    if (!user) {
+      alert("Please sign in or create an account to save dossiers to your Decision Journey.");
+      return;
+    }
+    try {
+      setIsSaving(true);
+      await saveDossier(activeJourney?.id, { analysis, userNote });
+      setSaveMsg("✓ Dossier saved to your Decision Journey Vault!");
+      setTimeout(() => setSaveMsg(""), 4000);
+    } catch (err) {
+      alert(err.message || "Failed to save dossier.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const isStartup = decisionType === "startup" || Boolean(analysis?.verified_observations);
+
   return (
     <div className="analysis-block">
-      {analysis.summary && (
-        <p className="analysis-summary">{analysis.summary}</p>
-      )}
+      {/* ── SAVE SNAPSHOT CARD ─────────────────────────────────────── */}
+      <div className="save-dossier-card">
+        <div className="save-dossier-header">
+          <span>💾 <strong>Save Snapshot to Decision Journey</strong></span>
+          <span className="subtext">Store in your vault to track progress or compare later</span>
+        </div>
+        <div className="save-dossier-inputs">
+          <input
+            type="text"
+            className="input-text-sm"
+            placeholder="Add an optional note (e.g. 'Considering 85% JEE cutoff vs fees')..."
+            value={userNote}
+            onChange={(e) => setUserNote(e.target.value)}
+          />
+          <button className="btn-primary btn-sm" onClick={handleSaveSnapshot} disabled={isSaving}>
+            {isSaving ? "Saving..." : "Save Snapshot"}
+          </button>
+        </div>
+        {saveMsg && <div className="save-success-text">{saveMsg}</div>}
+      </div>
+
+      {isStartup ? (
+        <StartupAssessmentView analysis={analysis} />
+      ) : (
+        <>
+          {analysis.summary && (
+            <p className="analysis-summary">{analysis.summary}</p>
+          )}
 
       <div className="analysis-options">
         {(analysis.options || []).map((opt, i) => (
@@ -429,6 +482,7 @@ function AnalysisBlock({ analysis }) {
             <OutcomeRow heading="Long-term (5 yr)" text={opt.long_term} />
             <OutcomeRow heading="Key risk" text={opt.key_risk} risk />
             <OutcomeRow heading="Key assumption" text={opt.key_assumption} />
+            <ExplainabilityDrawer explainability={opt.explainability} title={`Factor Attribution (${opt.label})`} />
           </div>
         ))}
       </div>
@@ -649,6 +703,8 @@ function AnalysisBlock({ analysis }) {
       )}
 
       <p className="analysis-disclaimer">{analysis.disclaimer}</p>
+        </>
+      )}
     </div>
   );
 }

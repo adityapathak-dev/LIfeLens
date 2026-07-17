@@ -3,6 +3,7 @@ import ResumeChecker from "./ResumeChecker";
 import { discoverExams } from "./api";
 import CountrySelect from "./CountrySelect";
 import DegreeSelect from "./DegreeSelect";
+import { useAuth } from "./AuthContext";
 
 /* ── Dropdown options ─────────────────────────────────────────── */
 
@@ -66,6 +67,7 @@ function countFilled(form, keys) {
 /* ── Main component ───────────────────────────────────────────── */
 
 export default function ContextIntake({ decisionType, onSubmit, onBack }) {
+  const { userMemory } = useAuth();
   const [form, setForm] = useState({});
   const [activeTab, setActiveTab] = useState("advisor");
   const [validationError, setValidationError] = useState("");
@@ -73,6 +75,24 @@ export default function ContextIntake({ decisionType, onSubmit, onBack }) {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [activeTab]);
+
+  useEffect(() => {
+    if (userMemory?.enabled) {
+      setForm((prev) => {
+        const updated = { ...prev };
+        if (!updated.country && userMemory.countryPreferences?.length > 0) {
+          updated.country = userMemory.countryPreferences[0];
+        }
+        if (!updated.targetDegree && userMemory.degreeInterests?.length > 0) {
+          updated.targetDegree = userMemory.degreeInterests[0];
+        }
+        if (!updated.riskTolerance && userMemory.riskTolerance) {
+          updated.riskTolerance = userMemory.riskTolerance;
+        }
+        return updated;
+      });
+    }
+  }, [userMemory]);
 
   const userCountryLower = (form.userCountry || "").trim().toLowerCase();
   const statePlaceholder = userCountryLower === "india" ? "e.g. Karnataka" : "e.g. California";

@@ -66,7 +66,16 @@ function generateLocalChatFallback(decisionType, collegesStr, countryStr, contex
         : "Moderate placement average compared to top-tier reach institutes.",
       key_assumption: "Active involvement in projects, high GPA maintenance, and interview readiness.",
       confidence: isReach ? "medium" : "high",
-      college_note: `Well regarded institution with proven career acceleration record for ${currentStream} students.`
+      college_note: `Well regarded institution with proven career acceleration record for ${currentStream} students.`,
+      explainability: {
+        influencing_inputs: [`Target degree: ${currentDegree}`, `Stream: ${currentStream}`, `Location: ${currentCountry}`],
+        assumptions_used: ["Assumes standard 2-year full-time academic course progression", "Assumes baseline interview readiness"],
+        missing_information: ["Specific financial scholarship eligibility status"],
+        confidence_rationale: isReach 
+          ? "Assigned Medium confidence as admission cutoff boundaries are competitive." 
+          : "Assigned High confidence due to matching historical cutoff bounds.",
+        sensitivity_factors: [`If GPA drops below 3.2, placement options move to regional safe tiers.`]
+      }
     });
   });
 
@@ -216,8 +225,42 @@ function generateLocalChatFallback(decisionType, collegesStr, countryStr, contex
   };
 }
 
+// ── INPUT SANITIZATION (OWASP A03 — Injection) ────────────────────────────────
+const MAX_STR_LEN = 100;
+function sanitizeInputStr(val) {
+  if (typeof val !== "string") return "";
+  return val.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").trim().slice(0, MAX_STR_LEN);
+}
+
+function sanitizeContextObject(ctx) {
+  if (!ctx || typeof ctx !== "object") return {};
+  const cleaned = {};
+  const allowedKeys = [
+    "userCountry", "userState", "userCity", "country",
+    "targetDegree", "streamCategory", "colleges", "financialSituation",
+    "runway", "locationPreference", "city", "role", "companies",
+    "skills", "currentSituation", "field", "myRole", "description",
+    "fundingStage", "riskTolerance"
+  ];
+  allowedKeys.forEach(k => {
+    if (ctx[k] !== undefined) {
+      if (typeof ctx[k] === "string") {
+        cleaned[k] = sanitizeInputStr(ctx[k]);
+      } else if (typeof ctx[k] === "number") {
+        cleaned[k] = ctx[k];
+      }
+    }
+  });
+  return cleaned;
+}
+
 router.post("/chat", async (req, res) => {
-  const { decision_type, history, country, field, colleges, context } = req.body;
+  const decision_type = sanitizeInputStr(req.body.decision_type);
+  const country = sanitizeInputStr(req.body.country);
+  const field = sanitizeInputStr(req.body.field);
+  const colleges = sanitizeInputStr(req.body.colleges);
+  const context = sanitizeContextObject(req.body.context);
+  const rawHistory = req.body.history;
 
   if (!decision_type || !CHAT_SYSTEM_PROMPTS[decision_type]) {
     return res
@@ -225,8 +268,21 @@ router.post("/chat", async (req, res) => {
       .json({ error: "Invalid or missing decision_type. Must be grad_school, job, or startup." });
   }
 
-  if (!Array.isArray(history) || history.length === 0) {
+  if (!Array.isArray(rawHistory) || rawHistory.length === 0) {
     return res.status(400).json({ error: "history must be a non-empty array of {role, content} objects." });
+  }
+
+  // Sanitize history messages (limit history size to max 10 to prevent resource exhaustion/context overflow)
+  const history = rawHistory
+    .slice(-10)
+    .filter(msg => msg && typeof msg === "object" && typeof msg.content === "string")
+    .map(msg => ({
+      role: msg.role === "assistant" ? "assistant" : "user",
+      content: msg.content.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").trim().slice(0, 1000)
+    }));
+
+  if (history.length === 0) {
+    return res.status(400).json({ error: "Invalid message objects in history." });
   }
 
   let systemPrompt = CHAT_SYSTEM_PROMPTS[decision_type];
