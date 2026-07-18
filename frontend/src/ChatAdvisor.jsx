@@ -38,6 +38,13 @@ function buildContextMessage(decisionType, context) {
     if (context.financialSituation) lines.push(`Financial Situation: ${context.financialSituation}`);
     if (context.runway) lines.push(`Savings Buffer: ${context.runway} months`);
     if (context.locationPreference) lines.push(`Location Preferences: ${context.locationPreference}`);
+    // Exam scores — critical for grad school analysis
+    if (context.examScores && Object.keys(context.examScores).length > 0) {
+      const scoreLines = Object.entries(context.examScores)
+        .map(([examId, score]) => `  - ${examId}: ${score}`)
+        .join("\n");
+      lines.push(`Exam Scores I have already taken:\n${scoreLines}`);
+    }
     return lines.join("\n");
   }
   if (decisionType === "job") {
@@ -51,6 +58,13 @@ function buildContextMessage(decisionType, context) {
     if (context.currentSituation) lines.push(`Current Work/Student Status: ${context.currentSituation}`);
     if (context.runway) lines.push(`Savings Buffer: ${context.runway} months`);
     if (context.locationPreference) lines.push(`Location Preferences: ${context.locationPreference}`);
+    // Resume data from ATS checker
+    if (context.parsedResume?.skills?.length > 0) {
+      lines.push(`Resume Skills Extracted: ${context.parsedResume.skills.slice(0, 15).join(", ")}`);
+    }
+    if (context.parsedResume?.experience) {
+      lines.push(`Resume Experience Summary: ${String(context.parsedResume.experience).slice(0, 400)}`);
+    }
     return lines.join("\n");
   }
   if (decisionType === "startup") {
@@ -120,6 +134,7 @@ export default function ChatAdvisor({ decisionType, context, onReset, onOpenGuid
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
   const startedRef = useRef(false);
+  const { userMemory } = useAuth();
 
   const latestAnalysis = history.findLast?.((m) => m.parsed?.is_analysis)
     ?? history.filter((m) => m.parsed?.is_analysis).at(-1);
@@ -176,7 +191,16 @@ export default function ChatAdvisor({ decisionType, context, onReset, onOpenGuid
         country: context.country || context.userCountry,
         field: context.field,
         colleges: context.colleges,
-        context: context,
+        context: {
+          ...context,
+          // Ensure exam scores and selected exams are explicitly forwarded
+          examScores: context.examScores || {},
+          selectedExams: context.selectedExams || [],
+          // Forward parsed resume data from ATS checker
+          parsedResume: context.parsedResume || null,
+          // Forward memory if enabled
+          memory: (userMemory?.enabled && userMemory) ? userMemory : null,
+        },
       });
 
       if (data.counselor) setCounselor(data.counselor);

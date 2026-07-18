@@ -227,30 +227,90 @@ function generateLocalChatFallback(decisionType, collegesStr, countryStr, contex
 
 // ── INPUT SANITIZATION (OWASP A03 — Injection) ────────────────────────────────
 const MAX_STR_LEN = 100;
+const MAX_LONG_STR_LEN = 2000; // for multi-line fields like colleges, skills, description
+
 function sanitizeInputStr(val) {
   if (typeof val !== "string") return "";
   return val.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").trim().slice(0, MAX_STR_LEN);
 }
 
+function sanitizeLongStr(val) {
+  if (typeof val !== "string") return "";
+  return val.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").trim().slice(0, MAX_LONG_STR_LEN);
+}
+
 function sanitizeContextObject(ctx) {
   if (!ctx || typeof ctx !== "object") return {};
   const cleaned = {};
-  const allowedKeys = [
+
+  // Short string fields
+  const shortKeys = [
     "userCountry", "userState", "userCity", "country",
-    "targetDegree", "streamCategory", "colleges", "financialSituation",
-    "runway", "locationPreference", "city", "role", "companies",
-    "skills", "currentSituation", "field", "myRole", "description",
+    "targetDegree", "streamCategory", "financialSituation",
+    "runway", "locationPreference", "city", "role",
+    "currentSituation", "field", "myRole",
     "fundingStage", "riskTolerance"
   ];
-  allowedKeys.forEach(k => {
+  // Long string fields (multi-line: colleges, skills, description)
+  const longKeys = ["colleges", "skills", "companies", "description", "locationPreference"];
+
+  shortKeys.forEach(k => {
     if (ctx[k] !== undefined) {
-      if (typeof ctx[k] === "string") {
-        cleaned[k] = sanitizeInputStr(ctx[k]);
-      } else if (typeof ctx[k] === "number") {
-        cleaned[k] = ctx[k];
-      }
+      if (typeof ctx[k] === "string") cleaned[k] = sanitizeInputStr(ctx[k]);
+      else if (typeof ctx[k] === "number") cleaned[k] = ctx[k];
     }
   });
+
+  longKeys.forEach(k => {
+    if (ctx[k] !== undefined && typeof ctx[k] === "string") {
+      cleaned[k] = sanitizeLongStr(ctx[k]);
+    }
+  });
+
+  // Exam scores: object { examId: scoreString }
+  if (ctx.examScores && typeof ctx.examScores === "object" && !Array.isArray(ctx.examScores)) {
+    const cleanedScores = {};
+    Object.entries(ctx.examScores).forEach(([examId, score]) => {
+      const cleanId = sanitizeInputStr(examId);
+      const cleanScore = sanitizeInputStr(String(score));
+      if (cleanId && cleanScore) cleanedScores[cleanId] = cleanScore;
+    });
+    cleaned.examScores = cleanedScores;
+  }
+
+  // Selected exam IDs
+  if (Array.isArray(ctx.selectedExams)) {
+    cleaned.selectedExams = ctx.selectedExams
+      .filter(id => typeof id === "string")
+      .map(id => sanitizeInputStr(id))
+      .slice(0, 20);
+  }
+
+  // Parsed resume data (from ATS checker) — extract key fields only
+  if (ctx.parsedResume && typeof ctx.parsedResume === "object") {
+    const r = ctx.parsedResume;
+    cleaned.resumeSkills = Array.isArray(r.skills) ? r.skills.slice(0, 20).map(s => sanitizeInputStr(s)).join(", ") : "";
+    cleaned.resumeEducation = typeof r.education === "string" ? sanitizeLongStr(r.education) : "";
+    cleaned.resumeExperience = typeof r.experience === "string" ? sanitizeLongStr(r.experience) : "";
+  }
+
+  // Memory fields (passed through from AuthContext)
+  if (ctx.memory && typeof ctx.memory === "object") {
+    const m = ctx.memory;
+    if (Array.isArray(m.degreeInterests)) cleaned.memoryDegreeInterests = m.degreeInterests.slice(0, 5).map(sanitizeInputStr).join(", ");
+    if (Array.isArray(m.examInterests)) cleaned.memoryExamInterests = m.examInterests.slice(0, 5).map(sanitizeInputStr).join(", ");
+    if (Array.isArray(m.countryPreferences)) cleaned.memoryCountryPrefs = m.countryPreferences.slice(0, 5).map(sanitizeInputStr).join(", ");
+    if (typeof m.budgetConstraints === "string") cleaned.memoryBudget = sanitizeLongStr(m.budgetConstraints);
+    if (Array.isArray(m.careerInterests)) cleaned.memoryCareerInterests = m.careerInterests.slice(0, 5).map(sanitizeInputStr).join(", ");
+    if (Array.isArray(m.skills)) cleaned.memorySkills = m.skills.slice(0, 20).map(sanitizeInputStr).join(", ");
+    if (typeof m.salaryExpectations === "string") cleaned.memorySalaryExpectations = sanitizeLongStr(m.salaryExpectations);
+    if (Array.isArray(m.industryInterests)) cleaned.memoryIndustryInterests = m.industryInterests.slice(0, 5).map(sanitizeInputStr).join(", ");
+    if (Array.isArray(m.sectorInterests)) cleaned.memorySectorInterests = m.sectorInterests.slice(0, 5).map(sanitizeInputStr).join(", ");
+    if (m.riskTolerance !== undefined) cleaned.memoryRiskTolerance = m.riskTolerance;
+    if (Array.isArray(m.fundingInterests)) cleaned.memoryFundingInterests = m.fundingInterests.slice(0, 5).map(sanitizeInputStr).join(", ");
+    if (Array.isArray(m.businessInterests)) cleaned.memoryBusinessInterests = m.businessInterests.slice(0, 5).map(sanitizeInputStr).join(", ");
+  }
+
   return cleaned;
 }
 
@@ -258,7 +318,7 @@ router.post("/chat", async (req, res) => {
   const decision_type = sanitizeInputStr(req.body.decision_type);
   const country = sanitizeInputStr(req.body.country);
   const field = sanitizeInputStr(req.body.field);
-  const colleges = sanitizeInputStr(req.body.colleges);
+  const colleges = sanitizeLongStr(req.body.colleges || "");
   const context = sanitizeContextObject(req.body.context);
   const rawHistory = req.body.history;
 
@@ -272,13 +332,13 @@ router.post("/chat", async (req, res) => {
     return res.status(400).json({ error: "history must be a non-empty array of {role, content} objects." });
   }
 
-  // Sanitize history messages (limit history size to max 10 to prevent resource exhaustion/context overflow)
+  // Keep up to 30 messages; allow 4000 chars per message to preserve full intake context
   const history = rawHistory
-    .slice(-10)
+    .slice(-30)
     .filter(msg => msg && typeof msg === "object" && typeof msg.content === "string")
     .map(msg => ({
       role: msg.role === "assistant" ? "assistant" : "user",
-      content: msg.content.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").trim().slice(0, 1000)
+      content: msg.content.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").trim().slice(0, 4000)
     }));
 
   if (history.length === 0) {
@@ -286,50 +346,110 @@ router.post("/chat", async (req, res) => {
   }
 
   let systemPrompt = CHAT_SYSTEM_PROMPTS[decision_type];
-  const userMessageCount = history.filter((msg) => msg.role === "user").length;
 
-  if (context) {
-    let contextStr = "\n\nCRITICAL CONTEXT INFORMATION (DO NOT ASK FOR THESE AGAIN):\n";
-    if (context.userCountry) contextStr += `- Current Country: ${context.userCountry}\n`;
-    if (context.userState) contextStr += `- Current State/Province: ${context.userState}\n`;
-    if (context.userCity) contextStr += `- Current City: ${context.userCity}\n`;
-    if (context.country) contextStr += `- Target Country/Market: ${context.country}\n`;
+  // Count only real follow-up user turns (skip message index 0 which is always the init context dump)
+  const userMessageCount = history.filter((msg) => msg.role === "user").length - 1;
 
-    if (decision_type === "grad_school") {
-      if (context.targetDegree) contextStr += `- Target Degree: ${context.targetDegree}\n`;
-      if (context.streamCategory) contextStr += `- Stream Category: ${context.streamCategory}\n`;
-      if (context.colleges) contextStr += `- Colleges under consideration: ${context.colleges}\n`;
-      if (context.financialSituation) contextStr += `- Financial situation/Budget: ${context.financialSituation}\n`;
-      if (context.runway) contextStr += `- Savings buffer: ${context.runway} months\n`;
-      if (context.locationPreference) contextStr += `- Location preferences: ${context.locationPreference}\n`;
-    } else if (decision_type === "job") {
-      if (context.city) contextStr += `- Target City/Region: ${context.city}\n`;
-      if (context.role) contextStr += `- Target Role/Job Title: ${context.role}\n`;
-      if (context.companies) contextStr += `- Companies/Offers under consideration: ${context.companies}\n`;
-      if (context.skills) contextStr += `- User Skills/Tech Stack: ${context.skills}\n`;
-      if (context.currentSituation) contextStr += `- Current Work/Student Situation: ${context.currentSituation}\n`;
-      if (context.runway) contextStr += `- Savings buffer: ${context.runway} months\n`;
-      if (context.locationPreference) contextStr += `- Location preferences: ${context.locationPreference}\n`;
-    } else if (decision_type === "startup") {
-      if (context.field) contextStr += `- Industry Field/Sector: ${context.field}\n`;
-      if (context.myRole) contextStr += `- User Role in Startup: ${context.myRole}\n`;
-      if (context.description) contextStr += `- Startup Description: ${context.description}\n`;
-      if (context.fundingStage) contextStr += `- Funding Stage: ${context.fundingStage}\n`;
-      if (context.runway) contextStr += `- Savings buffer: ${context.runway} months\n`;
-      if (context.locationPreference) contextStr += `- Location preferences: ${context.locationPreference}\n`;
-      if (context.riskTolerance) contextStr += `- Risk Tolerance: ${context.riskTolerance}/5\n`;
+  // ── BUILD RICH KNOWN-FACTS CONTEXT BLOCK ──────────────────────────────────────
+  // This is injected into the system prompt so the model has a complete inventory
+  // of everything already known. It must never ask for anything in this block.
+  const knownFacts = [];
+
+  // Location
+  if (context.userCountry) knownFacts.push(`CURRENT COUNTRY: ${context.userCountry}`);
+  if (context.userState) knownFacts.push(`CURRENT STATE/PROVINCE: ${context.userState}`);
+  if (context.userCity) knownFacts.push(`CURRENT CITY: ${context.userCity}`);
+  if (context.country) knownFacts.push(`TARGET COUNTRY/MARKET: ${context.country}`);
+
+  if (decision_type === "grad_school") {
+    if (context.targetDegree) knownFacts.push(`TARGET DEGREE: ${context.targetDegree}`);
+    if (context.streamCategory) knownFacts.push(`STREAM/BRANCH CATEGORY: ${context.streamCategory}`);
+    if (context.colleges) knownFacts.push(`COLLEGES UNDER CONSIDERATION:\n${context.colleges}`);
+    if (context.financialSituation) knownFacts.push(`FINANCIAL SITUATION: ${context.financialSituation}`);
+    if (context.runway) knownFacts.push(`SAVINGS BUFFER: ${context.runway} months`);
+    if (context.locationPreference) knownFacts.push(`LOCATION PREFERENCES: ${context.locationPreference}`);
+    // Exam scores — the most critical data point for grad school
+    if (context.examScores && Object.keys(context.examScores).length > 0) {
+      const scoreLines = Object.entries(context.examScores)
+        .map(([examId, score]) => `  • ${examId}: ${score}`)
+        .join("\n");
+      knownFacts.push(`EXAM SCORES PROVIDED BY USER (DO NOT ask for these — use them directly in your analysis):\n${scoreLines}`);
     }
-
-    contextStr += `
-You MUST NOT ask the user for any of the details listed above. You already have this information. Continue the conversation directly, deep diving into other aspects depending on what is missing to generate a full analysis. Ensure that any URLs returned are actual, official websites. Do not use generic domain placeholders.
-`;
-    systemPrompt = systemPrompt + contextStr;
+    // Memory fields for grad school
+    if (context.memoryDegreeInterests) knownFacts.push(`USER MEMORY — DEGREE INTERESTS: ${context.memoryDegreeInterests}`);
+    if (context.memoryExamInterests) knownFacts.push(`USER MEMORY — EXAM INTERESTS: ${context.memoryExamInterests}`);
+    if (context.memoryCountryPrefs) knownFacts.push(`USER MEMORY — COUNTRY PREFERENCES: ${context.memoryCountryPrefs}`);
+    if (context.memoryBudget) knownFacts.push(`USER MEMORY — BUDGET CONSTRAINTS: ${context.memoryBudget}`);
+  } else if (decision_type === "job") {
+    if (context.city) knownFacts.push(`TARGET CITY/REGION: ${context.city}`);
+    if (context.role) knownFacts.push(`TARGET ROLE/JOB TITLE: ${context.role}`);
+    if (context.companies) knownFacts.push(`COMPANIES/OFFERS UNDER CONSIDERATION:\n${context.companies}`);
+    if (context.skills) knownFacts.push(`SKILLS / TECH STACK: ${context.skills}`);
+    if (context.currentSituation) knownFacts.push(`CURRENT WORK/STUDENT STATUS: ${context.currentSituation}`);
+    if (context.runway) knownFacts.push(`SAVINGS BUFFER: ${context.runway} months`);
+    if (context.locationPreference) knownFacts.push(`LOCATION PREFERENCES: ${context.locationPreference}`);
+    // Resume data from ATS checker
+    if (context.resumeSkills) knownFacts.push(`RESUME — SKILLS EXTRACTED: ${context.resumeSkills}`);
+    if (context.resumeExperience) knownFacts.push(`RESUME — EXPERIENCE SUMMARY:\n${context.resumeExperience}`);
+    if (context.resumeEducation) knownFacts.push(`RESUME — EDUCATION:\n${context.resumeEducation}`);
+    // Memory fields for job
+    if (context.memoryCareerInterests) knownFacts.push(`USER MEMORY — CAREER INTERESTS: ${context.memoryCareerInterests}`);
+    if (context.memorySkills) knownFacts.push(`USER MEMORY — SKILLS: ${context.memorySkills}`);
+    if (context.memorySalaryExpectations) knownFacts.push(`USER MEMORY — SALARY EXPECTATIONS: ${context.memorySalaryExpectations}`);
+    if (context.memoryIndustryInterests) knownFacts.push(`USER MEMORY — INDUSTRY INTERESTS: ${context.memoryIndustryInterests}`);
+    if (context.memoryCountryPrefs) knownFacts.push(`USER MEMORY — PREFERRED COUNTRIES: ${context.memoryCountryPrefs}`);
+  } else if (decision_type === "startup") {
+    if (context.field) knownFacts.push(`INDUSTRY FIELD/SECTOR: ${context.field}`);
+    if (context.myRole) knownFacts.push(`USER ROLE IN STARTUP: ${context.myRole}`);
+    if (context.description) knownFacts.push(`STARTUP DESCRIPTION:\n${context.description}`);
+    if (context.fundingStage) knownFacts.push(`FUNDING STAGE: ${context.fundingStage}`);
+    if (context.runway) knownFacts.push(`SAVINGS BUFFER: ${context.runway} months`);
+    if (context.locationPreference) knownFacts.push(`LOCATION PREFERENCES: ${context.locationPreference}`);
+    if (context.riskTolerance) knownFacts.push(`RISK TOLERANCE: ${context.riskTolerance}/5`);
+    // Memory fields for startup
+    if (context.memorySectorInterests) knownFacts.push(`USER MEMORY — SECTOR INTERESTS: ${context.memorySectorInterests}`);
+    if (context.memoryFundingInterests) knownFacts.push(`USER MEMORY — FUNDING INTERESTS: ${context.memoryFundingInterests}`);
+    if (context.memoryBusinessInterests) knownFacts.push(`USER MEMORY — BUSINESS INTERESTS: ${context.memoryBusinessInterests}`);
+    if (context.memoryRiskTolerance !== undefined) knownFacts.push(`USER MEMORY — RISK TOLERANCE: ${context.memoryRiskTolerance}/5`);
   }
 
-  // Force conclusion directive on turn 3
-  if (userMessageCount >= 3) {
+  if (knownFacts.length > 0) {
     systemPrompt += `
-\nCRITICAL DIRECTIVE: You have reached the maximum allowed turns for this consultation. You MUST now finalize the consultation and output the full analysis. Set "is_analysis" to true and populate the "analysis" object completely. Do NOT ask any more questions.
+
+═══════════════════════════════════════════════════════════════
+COMPLETE KNOWN-FACTS INVENTORY (assembled from intake form + memory + resume)
+You MUST treat every item below as established fact.
+NEVER ask the user for any information already present here.
+When asking follow-up questions, explicitly reference this data to show awareness.
+For example, if exam score is known: "You reported a ${Object.values(context.examScores||{})[0] || '...'} score. Building on that, what is..." — not "Have you taken any exams?"
+═══════════════════════════════════════════════════════════════
+
+${knownFacts.map((f, i) => `[KNOWN-FACT ${i+1}] ${f}`).join("\n\n")}
+
+═══════════════════════════════════════════════════════════════
+INTELLIGENT QUESTIONING RULES:
+1. Read every KNOWN-FACT above before deciding what to ask.
+2. Only ask about information genuinely missing from the KNOWN-FACTS inventory.
+3. Every question must reference at least one known fact to demonstrate awareness.
+4. Your first response must begin with a synthesis paragraph summarizing everything you already know about this user — NOT a generic greeting.
+5. Responses must be substantial (minimum 150 words for questions, 400+ words for final analysis).
+6. Think and respond like a senior expert consultant, not a chatbot.
+═══════════════════════════════════════════════════════════════
+`;
+  }
+
+  // Completion directive — trigger after 5 real follow-up turns (generous but bounded)
+  if (userMessageCount >= 5) {
+    systemPrompt += `
+
+FINAL ANALYSIS DIRECTIVE: You have gathered sufficient information across ${userMessageCount} exchanges. You MUST now produce the complete Decision Dossier. Set "is_analysis" to true and populate every field of the "analysis" object in full detail. Do NOT ask further questions. The dossier must include:
+1. Strongest path given current data
+2. Most conservative path
+3. Highest upside path
+4. Alternative path worth considering
+5. Key risks and assumptions
+6. Information that could change the outcome
+This is your final output — make it comprehensive.
 `;
   }
 
@@ -343,7 +463,7 @@ You MUST NOT ask the user for any of the details listed above. You already have 
       parsed = safeParseJSON(rawText);
 
       // Programmatic turn limit guard: if 3 turns completed but LLM failed to return analysis, force fallback
-      if (userMessageCount >= 3 && !parsed.is_analysis) {
+      if (userMessageCount >= 5 && !parsed.is_analysis) {
         console.warn("[chatRoute] Turn limit reached but model did not output analysis. Forcing fallback.");
         throw new Error("Forced completion fallback");
       }
