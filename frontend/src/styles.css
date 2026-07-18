@@ -3925,15 +3925,113 @@ input:checked + .slider:before { transform: translateX(22px); }
   border: 1px solid rgba(36, 22, 10, 0.22);
 }
 
+[data-theme="light"] .session-history-modal {
+  background: #ffffff;
+  border-color: rgba(36, 22, 10, 0.22);
+}
+
+[data-theme="light"] .session-search-box {
+  background: #f3ebd9;
+  border-color: rgba(36, 22, 10, 0.22);
+}
+
+[data-theme="light"] .session-card-item {
+  background: #f3ebd9;
+  border-color: rgba(36, 22, 10, 0.18);
+}
+
+[data-theme="light"] .session-card-item.selected {
+  background: #e5d5be;
+  border-color: #8c501e;
+}
+
+[data-theme="light"] .session-detail-column {
+  background: #faf6f0;
+  border-color: rgba(36, 22, 10, 0.18);
+}
+
+[data-theme="light"] .transcript-msg.user {
+  background: #e5d5be;
+  color: #100904;
+}
+
+[data-theme="light"] .transcript-msg.assistant {
+  background: #f3ebd9;
+  color: #100904;
+}
+
 /* ─────────────────────────────────────────────────────────────────────────────
    SESSION HISTORY MODAL STYLES
    ────────────────────────────────────────────────────────────────────────── */
+.session-history-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 15, 30, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.25s ease-out;
+}
+
 .session-history-modal {
+  background: var(--bg);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-l);
+  width: 100%;
   max-width: 980px;
-  width: 94vw;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+  padding: 20px 24px;
+}
+
+.session-history-header {
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.session-history-title {
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  font-family: var(--font-display);
+}
+
+.session-history-subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.session-history-close-btn {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  color: var(--text-2);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.session-history-close-btn:hover {
+  background: var(--accent);
+  color: var(--accent-dark);
 }
 
 .session-history-controls {

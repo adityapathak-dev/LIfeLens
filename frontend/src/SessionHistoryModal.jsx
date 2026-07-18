@@ -62,15 +62,15 @@ export default function SessionHistoryModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Session History">
-      <div className="modal-card session-history-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="session-history-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Session History">
+      <div className="session-history-modal" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div className="modal-header">
+        <div className="session-history-header">
           <div>
-            <h2 className="modal-title">💬 Session History & Memory Vault</h2>
-            <p className="modal-subtitle">Revisit previous consultations, read transcripts, compare dossiers, or continue conversations.</p>
+            <h2 className="session-history-title">💬 Session History & Memory Vault</h2>
+            <p className="session-history-subtitle">Revisit previous consultations, read transcripts, compare dossiers, or continue conversations.</p>
           </div>
-          <button className="modal-close-btn" onClick={onClose} type="button" aria-label="Close">
+          <button className="session-history-close-btn" onClick={onClose} type="button" aria-label="Close">
             ✕
           </button>
         </div>
