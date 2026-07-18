@@ -11,8 +11,10 @@ const firebaseConfig = {
   appId: "1:1067312239518:web:e4771b2a9e871b3e2c3c8f"
 };
 
+const t0 = window.__lifelens_start || performance.now();
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 export const db = getFirestore(app);
+console.log(`[Startup] Firebase Initialized: ${(performance.now() - t0).toFixed(1)}ms`);
 export default app;

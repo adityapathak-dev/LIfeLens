@@ -8,8 +8,7 @@ import {
   deleteDoc,
   query,
   orderBy,
-  arrayUnion,
-  serverTimestamp
+  arrayUnion
 } from "firebase/firestore";
 import { db } from "./firebase";
 

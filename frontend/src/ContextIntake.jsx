@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
-import ResumeChecker from "./ResumeChecker";
+import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { discoverExams } from "./api";
-import CountrySelect from "./CountrySelect";
-import DegreeSelect from "./DegreeSelect";
 import { useAuth } from "./AuthContext";
+
+const ResumeChecker = lazy(() => import("./ResumeChecker"));
+const CountrySelect = lazy(() => import("./CountrySelect"));
+const DegreeSelect = lazy(() => import("./DegreeSelect"));
 
 /* ── Dropdown options ─────────────────────────────────────────── */
 
@@ -147,16 +148,18 @@ export default function ContextIntake({ decisionType, onSubmit, onBack }) {
       {/* SECTION B Views */}
       {decisionType === "job" && activeTab === "ats" && (
         <div className="intake-card fade-in">
-          <ResumeChecker
-            defaultCountry={form.country || form.userCountry || ""}
-            onAnalysisComplete={(parsedResume, atsResult) => {
-              set("parsedResume", parsedResume);
-              set("atsResult", atsResult);
-              if (parsedResume.country && !form.country) {
-                set("country", parsedResume.country);
-              }
-            }}
-          />
+          <Suspense fallback={<div style={{ padding: "20px", textAlign: "center", color: "var(--text-2)" }}>Loading ATS Resume Checker...</div>}>
+            <ResumeChecker
+              defaultCountry={form.country || form.userCountry || ""}
+              onAnalysisComplete={(parsedResume, atsResult) => {
+                set("parsedResume", parsedResume);
+                set("atsResult", atsResult);
+                if (parsedResume.country && !form.country) {
+                  set("country", parsedResume.country);
+                }
+              }}
+            />
+          </Suspense>
         </div>
       )}
 
@@ -479,13 +482,15 @@ function GradSchoolFields({ form, set, setParentValidationError }) {
         hint="Select target country to dynamically discover entrance exams"
         delay={0.15}
       >
-        <CountrySelect
-          id="country"
-          placeholder="Search country..."
-          value={form.country || ""}
-          onChange={(val) => set("country", val)}
-          required
-        />
+        <Suspense fallback={<input className="input-text" placeholder="Loading countries..." disabled />}>
+          <CountrySelect
+            id="country"
+            placeholder="Search country..."
+            value={form.country || ""}
+            onChange={(val) => set("country", val)}
+            required
+          />
+        </Suspense>
         {isDiscovering && (
           <div className="field-researching-alert">🔍 Researching entrance pathways & requirements...</div>
         )}
@@ -498,20 +503,22 @@ function GradSchoolFields({ form, set, setParentValidationError }) {
         hint="Search and select your desired degree (e.g. B.Tech, MBBS, MBA)"
         delay={0.2}
       >
-        <DegreeSelect
-          id="targetDegree"
-          value={form.targetDegree || ""}
-          onChange={(deg) => {
-            if (deg) {
-              set("targetDegree", deg.value);
-              set("streamCategory", deg.category);
-            } else {
-              set("targetDegree", "");
-              set("streamCategory", "");
-            }
-          }}
-          required
-        />
+        <Suspense fallback={<input className="input-text" placeholder="Loading degrees..." disabled />}>
+          <DegreeSelect
+            id="targetDegree"
+            value={form.targetDegree || ""}
+            onChange={(deg) => {
+              if (deg) {
+                set("targetDegree", deg.value);
+                set("streamCategory", deg.category);
+              } else {
+                set("targetDegree", "");
+                set("streamCategory", "");
+              }
+            }}
+            required
+          />
+        </Suspense>
       </Field>
 
       <Field
@@ -663,13 +670,15 @@ function JobFields({ form, set }) {
   return (
     <div className="fields-grid">
       <Field label="Target Country of Role" id="country" delay={0.15}>
-        <CountrySelect
-          id="country"
-          placeholder="Search target country..."
-          value={form.country || ""}
-          onChange={(val) => set("country", val)}
-          required
-        />
+        <Suspense fallback={<input className="input-text" placeholder="Loading countries..." disabled />}>
+          <CountrySelect
+            id="country"
+            placeholder="Search target country..."
+            value={form.country || ""}
+            onChange={(val) => set("country", val)}
+            required
+          />
+        </Suspense>
       </Field>
 
       <Field label="City / Region" id="city" hint="e.g. San Francisco, London, Tokyo" delay={0.2}>
@@ -762,13 +771,15 @@ function StartupFields({ form, set }) {
   return (
     <div className="fields-grid">
       <Field label="Target Country / Market" id="country" delay={0.15}>
-        <CountrySelect
-          id="country"
-          placeholder="Search target country..."
-          value={form.country || ""}
-          onChange={(val) => set("country", val)}
-          required
-        />
+        <Suspense fallback={<input className="input-text" placeholder="Loading countries..." disabled />}>
+          <CountrySelect
+            id="country"
+            placeholder="Search target country..."
+            value={form.country || ""}
+            onChange={(val) => set("country", val)}
+            required
+          />
+        </Suspense>
       </Field>
 
       <Field label="Startup industry field / sector" id="field" delay={0.2}>

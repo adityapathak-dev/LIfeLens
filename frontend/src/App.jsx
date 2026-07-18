@@ -1,17 +1,19 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import Nav from "./Nav.jsx";
 import Footer from "./Footer.jsx";
 import DecisionSelector from "./DecisionSelector.jsx";
-import StartupModeSelector from "./StartupModeSelector.jsx";
-import ContextIntake from "./ContextIntake.jsx";
-import ChatAdvisor from "./ChatAdvisor.jsx";
-import IdeaMeter from "./IdeaMeter.jsx";
+const StartupModeSelector = lazy(() => import("./StartupModeSelector.jsx"));
+const ContextIntake = lazy(() => import("./ContextIntake.jsx"));
+const ChatAdvisor = lazy(() => import("./ChatAdvisor.jsx"));
+const IdeaMeter = lazy(() => import("./IdeaMeter.jsx"));
 import AuthPage from "./AuthPage.jsx";
-import JourneyHub from "./JourneyHub.jsx";
-import HumanGuidanceModal from "./HumanGuidanceModal.jsx";
-import MemoryManagerModal from "./MemoryManagerModal.jsx";
 import { AuthProvider, useAuth } from "./AuthContext.jsx";
 import "./styles.css";
+
+// Lazy-loaded modal components for route/modal code splitting
+const JourneyHub = lazy(() => import("./JourneyHub.jsx"));
+const HumanGuidanceModal = lazy(() => import("./HumanGuidanceModal.jsx"));
+const MemoryManagerModal = lazy(() => import("./MemoryManagerModal.jsx"));
 
 // Inner app — only shown when user is authenticated
 function AppInner() {
@@ -116,57 +118,68 @@ function AppMain({ user, logOut }) {
       />
       <main className="app-shell">
         <div key={transitionKey} className="phase-enter" style={{ display: "contents" }}>
-          {phase === "select" && (
-            <DecisionSelector onSelect={handleSelect} />
-          )}
-          {phase === "startup_mode" && (
-            <StartupModeSelector onSelect={handleStartupMode} onBack={handleReset} />
-          )}
-          {phase === "intake" && (
-            <ContextIntake
-              decisionType={decisionType}
-              onSubmit={handleIntakeSubmit}
-              onBack={() =>
-                decisionType === "startup" ? setPhase("startup_mode") : handleReset()
-              }
-            />
-          )}
-          {phase === "chat" && (
-            <ChatAdvisor
-              decisionType={decisionType}
-              context={context}
-              onReset={handleReset}
-              onOpenGuidance={handleOpenGuidance}
-            />
-          )}
-          {phase === "idea_meter" && (
-            <IdeaMeter onReset={handleReset} onBack={() => setPhase("startup_mode")} />
-          )}
+          <Suspense fallback={<div style={{ padding: "40px", textAlign: "center", color: "var(--text-2)" }}>Loading view...</div>}>
+            {phase === "select" && (
+              <DecisionSelector onSelect={handleSelect} />
+            )}
+            {phase === "startup_mode" && (
+              <StartupModeSelector onSelect={handleStartupMode} onBack={handleReset} />
+            )}
+            {phase === "intake" && (
+              <ContextIntake
+                decisionType={decisionType}
+                onSubmit={handleIntakeSubmit}
+                onBack={() =>
+                  decisionType === "startup" ? setPhase("startup_mode") : handleReset()
+                }
+              />
+            )}
+            {phase === "chat" && (
+              <ChatAdvisor
+                decisionType={decisionType}
+                context={context}
+                onReset={handleReset}
+                onOpenGuidance={handleOpenGuidance}
+              />
+            )}
+            {phase === "idea_meter" && (
+              <IdeaMeter onReset={handleReset} onBack={() => setPhase("startup_mode")} />
+            )}
+          </Suspense>
         </div>
       </main>
       <Footer onReset={handleReset} phase={phase} />
 
-      {/* ── DECISION JOURNEYS HUB MODAL ────────────────────────────── */}
-      <JourneyHub
-        isOpen={isHubOpen}
-        onClose={() => setIsHubOpen(false)}
-        onResumeJourney={handleResumeJourney}
-      />
+      {/* ── LAZY-LOADED MODAL SUSPENSE BOUNDARY ─────────────────────── */}
+      <Suspense fallback={null}>
+        {/* ── DECISION JOURNEYS HUB MODAL ────────────────────────────── */}
+        {isHubOpen && (
+          <JourneyHub
+            isOpen={isHubOpen}
+            onClose={() => setIsHubOpen(false)}
+            onResumeJourney={handleResumeJourney}
+          />
+        )}
 
-      {/* ── HUMAN GUIDANCE DIRECTORY MODAL ─────────────────────────── */}
-      <HumanGuidanceModal
-        isOpen={isGuidanceOpen}
-        onClose={() => setIsGuidanceOpen(false)}
-        initialDomain={guidanceDomain}
-        initialCountry={guidanceCountry}
-      />
+        {/* ── HUMAN GUIDANCE DIRECTORY MODAL ─────────────────────────── */}
+        {isGuidanceOpen && (
+          <HumanGuidanceModal
+            isOpen={isGuidanceOpen}
+            onClose={() => setIsGuidanceOpen(false)}
+            initialDomain={guidanceDomain}
+            initialCountry={guidanceCountry}
+          />
+        )}
 
-      {/* ── DECISION MEMORY SETTINGS MODAL ─────────────────────────── */}
-      <MemoryManagerModal
-        isOpen={isMemoryOpen}
-        onClose={() => setIsMemoryOpen(false)}
-        initialTrack={decisionType}
-      />
+        {/* ── DECISION MEMORY SETTINGS MODAL ─────────────────────────── */}
+        {isMemoryOpen && (
+          <MemoryManagerModal
+            isOpen={isMemoryOpen}
+            onClose={() => setIsMemoryOpen(false)}
+            initialTrack={decisionType}
+          />
+        )}
+      </Suspense>
     </>
   );
 }

@@ -1,6 +1,85 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <script>
+      window.__lifelens_start = performance.now();
+      window.__network_logs = [];
+
+      // Intercept fetch
+      const origFetch = window.fetch;
+      window.fetch = async function(...args) {
+        const url = typeof args[0] === 'string' ? args[0] : (args[0] && args[0].url) || String(args[0]);
+        const startTime = performance.now() - window.__lifelens_start;
+        const t0 = performance.now();
+        try {
+          const res = await origFetch.apply(this, args);
+          const endTime = performance.now() - window.__lifelens_start;
+          const duration = performance.now() - t0;
+          const log = {
+            url,
+            startTime: `${startTime.toFixed(1)}ms`,
+            endTime: `${endTime.toFixed(1)}ms`,
+            duration: `${duration.toFixed(1)}ms`,
+            status: `HTTP ${res.status}`,
+            ok: res.ok
+          };
+          window.__network_logs.push(log);
+          console.log(`[Network fetch] ${url} | Start: ${log.startTime} | End: ${log.endTime} | Duration: ${log.duration} | ${log.status}`);
+          return res;
+        } catch (err) {
+          const endTime = performance.now() - window.__lifelens_start;
+          const duration = performance.now() - t0;
+          const log = {
+            url,
+            startTime: `${startTime.toFixed(1)}ms`,
+            endTime: `${endTime.toFixed(1)}ms`,
+            duration: `${duration.toFixed(1)}ms`,
+            status: `FAILED (${err.message})`,
+            ok: false
+          };
+          window.__network_logs.push(log);
+          console.warn(`[Network fetch FAILED] ${url} | Start: ${log.startTime} | End: ${log.endTime} | Duration: ${log.duration} | ${err.message}`);
+          throw err;
+        }
+      };
+
+      // Intercept XMLHttpRequest (Firebase WebChannel)
+      const origXHR = window.XMLHttpRequest;
+      window.XMLHttpRequest = function() {
+        const xhr = new origXHR();
+        let url = '';
+        let t0 = 0;
+        let startTime = 0;
+
+        const origOpen = xhr.open;
+        xhr.open = function(method, requestUrl) {
+          url = requestUrl;
+          return origOpen.apply(this, arguments);
+        };
+
+        const origSend = xhr.send;
+        xhr.send = function() {
+          t0 = performance.now();
+          startTime = t0 - window.__lifelens_start;
+          xhr.addEventListener('loadend', function() {
+            const endTime = performance.now() - window.__lifelens_start;
+            const duration = performance.now() - t0;
+            const log = {
+              url,
+              startTime: `${startTime.toFixed(1)}ms`,
+              endTime: `${endTime.toFixed(1)}ms`,
+              duration: `${duration.toFixed(1)}ms`,
+              status: `HTTP ${xhr.status}`,
+              ok: xhr.status >= 200 && xhr.status < 300
+            };
+            window.__network_logs.push(log);
+            console.log(`[Network XHR] ${url} | Start: ${log.startTime} | End: ${log.endTime} | Duration: ${log.duration} | ${log.status}`);
+          });
+          return origSend.apply(this, arguments);
+        };
+        return xhr;
+      };
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Life Lens — AI Decision Advisor</title>

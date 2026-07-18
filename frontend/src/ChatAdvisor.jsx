@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
 import { sendChatMessage } from "./api.js";
 import ConfidenceStamp from "./ConfidenceStamp.jsx";
 import { FIELD_OPTS } from "./ContextIntake.jsx";
 import { useAuth } from "./AuthContext.jsx";
-import ExplainabilityDrawer from "./ExplainabilityDrawer.jsx";
-import StartupAssessmentView from "./StartupAssessmentView.jsx";
 import logoImg from "./assets/logo.jpg";
+
+const ExplainabilityDrawer = lazy(() => import("./ExplainabilityDrawer.jsx"));
+const StartupAssessmentView = lazy(() => import("./StartupAssessmentView.jsx"));
 
 const LABELS = {
   grad_school: "Academic Advisor",
@@ -461,7 +462,9 @@ function AnalysisBlock({ analysis, decisionType }) {
       </div>
 
       {isStartup ? (
-        <StartupAssessmentView analysis={analysis} />
+        <Suspense fallback={<div className="glass-card" style={{ padding: "20px", textAlign: "center", color: "var(--text-2)" }}>Loading diagnostic matrix...</div>}>
+          <StartupAssessmentView analysis={analysis} />
+        </Suspense>
       ) : (
         <>
           {analysis.summary && (
@@ -482,7 +485,9 @@ function AnalysisBlock({ analysis, decisionType }) {
             <OutcomeRow heading="Long-term (5 yr)" text={opt.long_term} />
             <OutcomeRow heading="Key risk" text={opt.key_risk} risk />
             <OutcomeRow heading="Key assumption" text={opt.key_assumption} />
-            <ExplainabilityDrawer explainability={opt.explainability} title={`Factor Attribution (${opt.label})`} />
+            <Suspense fallback={null}>
+              <ExplainabilityDrawer explainability={opt.explainability} title={`Factor Attribution (${opt.label})`} />
+            </Suspense>
           </div>
         ))}
       </div>

@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import { useAuth } from "./AuthContext";
 import { TRACK_PROGRESS_MILESTONES } from "./journeyService";
-import DossierComparator from "./DossierComparator";
+
+const DossierComparator = lazy(() => import("./DossierComparator"));
 
 export default function JourneyHub({ isOpen, onClose, onResumeJourney }) {
   const {
     user,
     userJourneys,
+    isJourneysLoading,
     fetchJourneys,
     updateJourneyProgress,
     updateJourneyStatus,
@@ -118,7 +120,11 @@ export default function JourneyHub({ isOpen, onClose, onResumeJourney }) {
         {/* ── TAB 1: ACTIVE JOURNEYS ─────────────────────────────────── */}
         {activeTab === "active" && (
           <div className="tab-content">
-            {activeJourneys.length === 0 ? (
+            {isJourneysLoading && userJourneys.length === 0 ? (
+              <div className="empty-state">
+                <p>⏳ Loading journeys...</p>
+              </div>
+            ) : activeJourneys.length === 0 ? (
               <div className="empty-state">
                 <p>No active decision journeys yet. Start an advisor consultation or context intake to begin tracking your choices!</p>
               </div>
@@ -277,14 +283,16 @@ export default function JourneyHub({ isOpen, onClose, onResumeJourney }) {
         )}
 
         {/* ── DOSSIER COMPARATOR MODAL ───────────────────────────────── */}
-        {comparingDossiers && (
-          <DossierComparator
-            dossierA={comparingDossiers.a}
-            dossierB={comparingDossiers.b}
-            journeyId={comparingDossiers.journeyId}
-            onClose={() => setComparingDossiers(null)}
-          />
-        )}
+        <Suspense fallback={null}>
+          {comparingDossiers && (
+            <DossierComparator
+              dossierA={comparingDossiers.a}
+              dossierB={comparingDossiers.b}
+              journeyId={comparingDossiers.journeyId}
+              onClose={() => setComparingDossiers(null)}
+            />
+          )}
+        </Suspense>
       </div>
     </div>
   );

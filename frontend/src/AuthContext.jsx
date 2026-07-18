@@ -34,39 +34,67 @@ export function AuthProvider({ children }) {
   const [userJourneys, setUserJourneys] = useState([]);
   const [activeJourney, setActiveJourney] = useState(null);
   const [userMemory, setUserMemory] = useState(null);
+  const [isJourneysLoading, setIsJourneysLoading] = useState(false);
+  const [isMemoryLoading, setIsMemoryLoading] = useState(false);
 
   useEffect(() => {
-    // Safety timeout ensuring the app loads within 2 seconds even if Firebase is slow
+    const startMs = window.__lifelens_start || performance.now();
+    console.log(`[Startup] React Mounted (AuthProvider): ${(performance.now() - startMs).toFixed(1)}ms`);
+
+    // Safety fallback timer ensuring app shell renders within 2s under any circumstances
     const safetyTimer = setTimeout(() => {
+      console.warn(`[Startup] Safety fallback unblock triggered at ${(performance.now() - startMs).toFixed(1)}ms`);
       setLoading(false);
     }, 2000);
 
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      try {
-        setUser(firebaseUser);
-        if (firebaseUser) {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      const authTime = (performance.now() - startMs).toFixed(1);
+      console.log(`[Startup] Auth Resolved (onAuthStateChanged): ${authTime}ms`);
+      
+      clearTimeout(safetyTimer);
+      setUser(firebaseUser);
+      // Immediately unblock startup and render App Shell!
+      setLoading(false);
+      console.log(`[Startup] App Shell Ready (Non-blocking): ${(performance.now() - startMs).toFixed(1)}ms`);
+
+      if (firebaseUser) {
+        const uid = firebaseUser.uid;
+        setIsJourneysLoading(true);
+        setIsMemoryLoading(true);
+
+        // Background Journeys fetch (Parallel, Non-blocking)
+        (async () => {
+          const t0 = performance.now();
           try {
-            const journeys = await getJourneys(firebaseUser.uid);
+            const journeys = await getJourneys(uid);
             setUserJourneys(journeys);
+            console.log(`[Background] Journeys Loaded: ${(performance.now() - t0).toFixed(1)}ms`);
           } catch (err) {
-            console.warn("[AuthContext] Could not fetch journeys:", err.message);
+            console.warn("[Background] Journeys fetch error:", err.message);
+          } finally {
+            setIsJourneysLoading(false);
           }
+        })();
+
+        // Background Memory Profile fetch (Parallel, Non-blocking)
+        (async () => {
+          const t0 = performance.now();
           try {
-            const mem = await getUserMemory(firebaseUser.uid);
+            const mem = await getUserMemory(uid);
             setUserMemory(mem);
+            console.log(`[Background] Memory Profile Loaded: ${(performance.now() - t0).toFixed(1)}ms`);
           } catch (err) {
-            console.warn("[AuthContext] Could not fetch memory:", err.message);
+            console.warn("[Background] Memory fetch error:", err.message);
+          } finally {
+            setIsMemoryLoading(false);
           }
-        } else {
-          setUserJourneys([]);
-          setActiveJourney(null);
-          setUserMemory(null);
-        }
-      } catch (err) {
-        console.error("[AuthContext] Auth state error:", err.message);
-      } finally {
-        clearTimeout(safetyTimer);
-        setLoading(false);
+        })();
+      } else {
+        setUserJourneys([]);
+        setActiveJourney(null);
+        setUserMemory(null);
+        setIsJourneysLoading(false);
+        setIsMemoryLoading(false);
       }
     });
 
@@ -168,9 +196,11 @@ export function AuthProvider({ children }) {
     return snapshot;
   }
 
-  const value = {
+  const value = React.useMemo(() => ({
     user,
     loading,
+    isJourneysLoading,
+    isMemoryLoading,
     signUpEmail,
     signInEmail,
     signInGoogle,
@@ -191,7 +221,7 @@ export function AuthProvider({ children }) {
     updateJourneyStatus: (jId, s) => updateJourneyStatus(user?.uid, jId, s),
     saveUserReflection: (jId, dId, r) => saveUserReflection(user?.uid, jId, dId, r),
     deleteJourney: (jId) => deleteJourney(user?.uid, jId)
-  };
+  }), [user, loading, isJourneysLoading, isMemoryLoading, userJourneys, activeJourney, userMemory]);
 
   if (loading) {
     return (

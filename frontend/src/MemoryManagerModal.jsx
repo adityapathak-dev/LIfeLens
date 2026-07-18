@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
 
 export default function MemoryManagerModal({ isOpen, onClose, initialTrack = "grad_school" }) {
-  const { userMemory, saveUserMemory, clearUserMemory, toggleMemoryConsent } = useAuth();
+  const { userMemory, isMemoryLoading, saveUserMemory, clearUserMemory, toggleMemoryConsent } = useAuth();
 
   // Helper to map track key to tab key
   const getTabForTrack = (track) => {
@@ -149,6 +149,7 @@ export default function MemoryManagerModal({ isOpen, onClose, initialTrack = "gr
         </header>
 
         {msg && <div className="toast-banner info">{msg}</div>}
+        {isMemoryLoading && !userMemory && <div className="toast-banner info">⏳ Loading saved preferences...</div>}
 
         {/* ── CONSENT TOGGLE SWITCH ──────────────────────────────────────── */}
         <div className="consent-card">
