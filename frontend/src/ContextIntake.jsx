@@ -67,11 +67,17 @@ function countFilled(form, keys) {
 
 /* ── Main component ───────────────────────────────────────────── */
 
-export default function ContextIntake({ decisionType, onSubmit, onBack }) {
+export default function ContextIntake({ decisionType, onSubmit, onBack, initialTab = "advisor" }) {
   const { userMemory } = useAuth();
   const [form, setForm] = useState({});
-  const [activeTab, setActiveTab] = useState("advisor");
+  const [activeTab, setActiveTab] = useState(initialTab || "advisor");
   const [validationError, setValidationError] = useState("");
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -115,35 +121,21 @@ export default function ContextIntake({ decisionType, onSubmit, onBack }) {
     onSubmit(form);
   }
 
-  const showTabs = decisionType === "job";
   const keys = FIELD_KEYS[decisionType] || [];
   const filled = countFilled(form, keys);
   const pct = keys.length > 0 ? Math.round((filled / keys.length) * 100) : 0;
 
+  const backLabel = decisionType === "job"
+    ? "← Back to Job Options"
+    : decisionType === "startup"
+    ? "← Back to Startup Options"
+    : "← Change decision type";
+
   return (
     <div className="intake-wrap">
       <button className="back-btn" type="button" onClick={onBack}>
-        ← Change decision type
+        {backLabel}
       </button>
-
-      {showTabs && (
-        <div className="intake-tabs">
-          <button
-            type="button"
-            className={`intake-tab-btn ${activeTab === "advisor" ? "active" : ""}`}
-            onClick={() => setActiveTab("advisor")}
-          >
-            💼 Section A: Job Advisor
-          </button>
-          <button
-            type="button"
-            className={`intake-tab-btn ${activeTab === "ats" ? "active" : ""}`}
-            onClick={() => setActiveTab("ats")}
-          >
-            ⚡ Section B: Resume ATS Checker
-          </button>
-        </div>
-      )}
 
       {/* SECTION B Views */}
       {decisionType === "job" && activeTab === "ats" && (
