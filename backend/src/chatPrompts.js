@@ -23,14 +23,53 @@ Standard response (while asking questions):
   "suggested_options": ["Short answer option 1", "Short answer option 2", "Short answer option 3"]
 }
 
-IMPORTANT: When your question has known answer categories (e.g. asking about financial situation, location preference, programme type, stream, work status), populate "suggested_options" with 3–5 concise options the user can tap to answer instantly. For fully open-ended questions (e.g. "tell me more about your dream career"), leave suggested_options as an empty array []. Options should be short (max 6 words each).
-
 Analysis response (after covering all critical factors including exam score):
 {
-  "message": "Here is my final assessment and recommendation based on our conversation:",
+  "message": "Here is my comprehensive Decision Dossier and Strategic Assessment based on our consultation:",
   "is_analysis": true,
   "analysis": {
-    "summary": "2–3 sentence synthesis of the student's specific situation including their exam score and realistic eligibility band",
+    "summary": "Detailed executive summary synthesizing the user's situation, exam scores, and decision options (150+ words)",
+    "executive_summary": "Comprehensive executive overview covering core dilemma, profile evaluation, and key strategic direction (200+ words)",
+    "situation_analysis": "Deep analytical breakdown of academic standing, market positioning, financial constraints, and timeline (200+ words)",
+    "swot": {
+      "strengths": ["Key competitive advantage 1", "Key competitive advantage 2", "Key strength 3"],
+      "weaknesses": ["Vulnerability 1", "Vulnerability 2"],
+      "constraints": ["Financial/Geographic constraint 1", "Score boundary constraint 2"],
+      "opportunities": ["Unused pathway 1", "Market/Branch opportunity 2"],
+      "risks": ["Primary decision risk 1", "Downside risk 2"]
+    },
+    "primary_path": {
+      "title": "Primary Recommended Path",
+      "description": "Exhaustive details on the top candidate option, why it aligns best, and exact roadmap",
+      "best_case_scenario": "Realistic best-case outcome over 5 years if executed flawlessly",
+      "worst_case_scenario": "Worst-case outcome and how to mitigate it"
+    },
+    "alternate_path_a": {
+      "title": "Alternative Path A (Conservative)",
+      "description": "Detailed fallback option focusing on safety, cost control, or local availability"
+    },
+    "alternate_path_b": {
+      "title": "Alternative Path B (High Upside / Reach)",
+      "description": "High-upside option pushing boundary criteria or lateral entries"
+    },
+    "outlooks": {
+      "outlook_1yr": "Specific 1-year expectations: coursework, campus placement, immediate cost",
+      "outlook_3yr": "Specific 3-year expectations: mid-degree projects, internships, specialization",
+      "outlook_5yr": "Specific 5-year expectations: post-grad job placement, salary trajectory, long-term ROI"
+    },
+    "recommended_actions": [
+      "Immediate Action Item 1 (Next 7 days)",
+      "Action Item 2 (Next 30 days)",
+      "Action Item 3 (Next 90 days)"
+    ],
+    "critical_unknowns": [
+      "Critical missing variable 1",
+      "Uncertainty variable 2"
+    ],
+    "confidence_assessment": {
+      "level": "high",
+      "rationale": "Detailed explanation of confidence level based on hard exam score match and verified budget parameters."
+    },
     "options": [
       {
         "label": "Option or college name",
@@ -38,48 +77,49 @@ Analysis response (after covering all critical factors including exam score):
         "long_term": "The 5-year career and life trajectory if this path works out",
         "key_risk": "The single biggest uncertainty or downside",
         "key_assumption": "What must be true for this path to work well",
-        "confidence": "low",
-        "college_note": "One honest sentence on this college's reputation and actual ranking for the user's stream — be direct, not diplomatic",
+        "confidence": "high",
+        "college_note": "Direct, honest sentence on college reputation and ranking",
         "explainability": {
-          "influencing_inputs": ["JEE Main percentile 68%", "Target degree B.Tech", "Self-funded budget"],
-          "assumptions_used": ["Assumes no state reservation quota applies"],
-          "missing_information": ["Specific branch preference priority"],
-          "confidence_rationale": "Assigned Medium confidence because exam cutoff ranges match, but exact financial cap was omitted.",
-          "sensitivity_factors": ["If JEE score increases above 85th percentile, top NIT alternatives become available."]
+          "influencing_inputs": ["JEE Main percentile 93%", "Target degree B.Tech CS"],
+          "assumptions_used": ["Assumes no state quota applies"],
+          "missing_information": ["Branch priority"],
+          "confidence_rationale": "High confidence due to verified score match.",
+          "sensitivity_factors": ["If JEE score increases, top NITs unlock."]
         }
       }
     ],
     "hidden_tradeoffs": [
-      "A factor the user did not mention that significantly affects this decision",
-      "A second unconsidered dimension"
+      "Significant unconsidered tradeoff 1",
+      "Unconsidered tradeoff 2"
     ],
     "branch_questions": [
-      "A 'what if' question worth sitting with",
-      "A second branch worth exploring"
+      "Strategic 'what if' question 1",
+      "Strategic 'what if' question 2"
     ],
     "best_suggestion": {
-      "choice": "Name of the recommended college (must be one of the options the student mentioned)",
-      "reasoning": "Clear, grounded explanation of why this is the best of their available options given their exam score, location, and goals",
-      "link": "Valid, real URL to the official college website (e.g. https://www.iitb.ac.in)"
+      "choice": "Name of top recommended college from user's list",
+      "reasoning": "Grounded explanation of why this is best",
+      "link": "https://www.example.edu"
     },
     "top_alternate": {
-      "name": "Name of ONE college NOT in the student's list — must be realistically reachable given their exam score and country",
-      "why": "Why this is worth considering — honest about reputation, placement record, and how it fits the student's actual eligibility",
-      "eligibility": "What exam score/rank or criteria is typically required to get into this college (e.g. JEE Main 85+ percentile / SAT 1250+)",
-      "link": "Valid, real URL to the official college website"
+      "name": "One college NOT in student's list reachable at their score",
+      "why": "Why it's worth considering",
+      "eligibility": "Typical cutoff required",
+      "link": "https://www.example.edu"
     },
     "explore_more": [
       {
-        "name": "College name (NOT in the student's original list, realistically reachable)",
-        "reason": "Brief honest reason why it fits — program strength, placement, location",
-        "eligibility": "Typical cutoff score/rank needed (e.g. CUET 600+ / JEE Main 70-80 percentile)",
-        "link": "Valid, real URL to the official college website"
+        "name": "Reachable college name",
+        "reason": "Why it fits",
+        "eligibility": "Typical score needed",
+        "link": "https://www.example.edu"
       }
     ],
-    "disclaimer": "These are structured possibilities based on what you shared, not predictions. You are the one who decides — this tool provides suggestions based on your inputs."
+    "disclaimer": "These are structured possibilities based on what you shared, not predictions."
   },
   "offer_counselor": false
 }
+`;
 
 Rules for the college analysis:
 - confidence must be exactly one of: "low", "medium", "high"

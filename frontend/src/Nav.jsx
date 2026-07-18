@@ -8,13 +8,15 @@ export default function Nav({
   onLogout = () => {},
   onOpenHub = () => {},
   onOpenGuidance = () => {},
-  onOpenMemory = () => {}
+  onOpenMemory = () => {},
+  onOpenSessions = () => {},
+  onGoHome = () => {}
 }) {
   return (
     <header className="app-nav" role="banner">
       <div className="nav-inner">
         {/* Logo */}
-        <div className="nav-logo">
+        <div className="nav-logo" onClick={onGoHome} style={{ cursor: "pointer" }} title="Return to Dashboard">
           <div className="nav-logo-container">
             <img className="nav-logo-img" src={logoImg} alt="Life Lens Logo" />
           </div>
@@ -24,6 +26,18 @@ export default function Nav({
         </div>
 
         <div className="nav-right">
+          {/* Session History Button */}
+          {user && (
+            <button
+              className="nav-sessions-btn"
+              onClick={onOpenSessions}
+              type="button"
+              title="Open Session History & Transcripts"
+            >
+              📜 Session History
+            </button>
+          )}
+
           {/* Decision Journeys Hub Button */}
           {user && (
             <button
@@ -32,7 +46,7 @@ export default function Nav({
               type="button"
               title="Open Decision Journeys Hub"
             >
-              🧭 Decision Journeys
+              🧭 Journeys
             </button>
           )}
 

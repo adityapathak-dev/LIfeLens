@@ -3,6 +3,7 @@ import Nav from "./Nav.jsx";
 import Footer from "./Footer.jsx";
 import DecisionSelector from "./DecisionSelector.jsx";
 const StartupModeSelector = lazy(() => import("./StartupModeSelector.jsx"));
+const JobModeSelector = lazy(() => import("./JobModeSelector.jsx"));
 const ContextIntake = lazy(() => import("./ContextIntake.jsx"));
 const ChatAdvisor = lazy(() => import("./ChatAdvisor.jsx"));
 const IdeaMeter = lazy(() => import("./IdeaMeter.jsx"));
@@ -14,6 +15,7 @@ import "./styles.css";
 const JourneyHub = lazy(() => import("./JourneyHub.jsx"));
 const HumanGuidanceModal = lazy(() => import("./HumanGuidanceModal.jsx"));
 const MemoryManagerModal = lazy(() => import("./MemoryManagerModal.jsx"));
+const SessionHistoryModal = lazy(() => import("./SessionHistoryModal.jsx"));
 
 // Inner app — only shown when user is authenticated
 function AppInner() {
@@ -33,6 +35,7 @@ function AppMain({ user, logOut }) {
   const [isHubOpen, setIsHubOpen] = useState(false);
   const [isGuidanceOpen, setIsGuidanceOpen] = useState(false);
   const [isMemoryOpen, setIsMemoryOpen] = useState(false);
+  const [isSessionsOpen, setIsSessionsOpen] = useState(false);
   const [guidanceDomain, setGuidanceDomain] = useState("grad_school");
   const [guidanceCountry, setGuidanceCountry] = useState("");
   const [transitionKey, setTransitionKey] = useState(0);
@@ -71,12 +74,22 @@ function AppMain({ user, logOut }) {
   function handleSelect(type) {
     setDecisionType(type);
     if (type === "startup") goTo("startup_mode");
+    else if (type === "job") goTo("job_mode");
     else goTo("intake");
   }
 
   function handleStartupMode(mode) {
     if (mode === "idea_meter") goTo("idea_meter");
     else goTo("intake");
+  }
+
+  function handleJobMode(mode) {
+    if (mode === "ats") {
+      setContext({ initialTab: "ats" });
+      goTo("intake");
+    } else {
+      goTo("intake");
+    }
   }
 
   function handleIntakeSubmit(formData) {
@@ -99,6 +112,13 @@ function AppMain({ user, logOut }) {
     goTo("chat");
   }
 
+  function handleContinueSession(session) {
+    setDecisionType(session.decisionType);
+    setContext(session.context || {});
+    setIsSessionsOpen(false);
+    goTo("chat");
+  }
+
   function handleOpenGuidance(domain = "grad_school", country = "") {
     setGuidanceDomain(domain || decisionType || "grad_school");
     setGuidanceCountry(country || context?.country || "");
@@ -115,6 +135,8 @@ function AppMain({ user, logOut }) {
         onOpenHub={() => setIsHubOpen(true)}
         onOpenGuidance={() => handleOpenGuidance(decisionType, context?.country)}
         onOpenMemory={() => setIsMemoryOpen(true)}
+        onOpenSessions={() => setIsSessionsOpen(true)}
+        onGoHome={handleReset}
       />
       <main className="app-shell">
         <div key={transitionKey} className="phase-enter" style={{ display: "contents" }}>
@@ -125,13 +147,18 @@ function AppMain({ user, logOut }) {
             {phase === "startup_mode" && (
               <StartupModeSelector onSelect={handleStartupMode} onBack={handleReset} />
             )}
+            {phase === "job_mode" && (
+              <JobModeSelector onSelect={handleJobMode} onBack={handleReset} />
+            )}
             {phase === "intake" && (
               <ContextIntake
                 decisionType={decisionType}
                 onSubmit={handleIntakeSubmit}
-                onBack={() =>
-                  decisionType === "startup" ? setPhase("startup_mode") : handleReset()
-                }
+                onBack={() => {
+                  if (decisionType === "startup") setPhase("startup_mode");
+                  else if (decisionType === "job") setPhase("job_mode");
+                  else handleReset();
+                }}
               />
             )}
             {phase === "chat" && (
@@ -140,6 +167,7 @@ function AppMain({ user, logOut }) {
                 context={context}
                 onReset={handleReset}
                 onOpenGuidance={handleOpenGuidance}
+                onOpenSessions={() => setIsSessionsOpen(true)}
               />
             )}
             {phase === "idea_meter" && (
@@ -158,6 +186,15 @@ function AppMain({ user, logOut }) {
             isOpen={isHubOpen}
             onClose={() => setIsHubOpen(false)}
             onResumeJourney={handleResumeJourney}
+          />
+        )}
+
+        {/* ── SESSION HISTORY MODAL ───────────────────────────────────── */}
+        {isSessionsOpen && (
+          <SessionHistoryModal
+            isOpen={isSessionsOpen}
+            onClose={() => setIsSessionsOpen(false)}
+            onContinueSession={handleContinueSession}
           />
         )}
 

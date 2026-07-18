@@ -19,7 +19,11 @@ import {
   deleteJourney,
   getUserMemory,
   updateUserMemory,
-  deleteUserMemory
+  deleteUserMemory,
+  saveAdvisorSession,
+  getAdvisorSessions,
+  duplicateAdvisorSession,
+  deleteAdvisorSession
 } from "./journeyService";
 
 const AuthContext = createContext(null);
@@ -32,43 +36,38 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [userJourneys, setUserJourneys] = useState([]);
+  const [userSessions, setUserSessions] = useState([]);
   const [activeJourney, setActiveJourney] = useState(null);
+  const [activeSession, setActiveSession] = useState(null);
   const [userMemory, setUserMemory] = useState(null);
   const [isJourneysLoading, setIsJourneysLoading] = useState(false);
+  const [isSessionsLoading, setIsSessionsLoading] = useState(false);
   const [isMemoryLoading, setIsMemoryLoading] = useState(false);
 
   useEffect(() => {
     const startMs = window.__lifelens_start || performance.now();
     console.log(`[Startup] React Mounted (AuthProvider): ${(performance.now() - startMs).toFixed(1)}ms`);
 
-    // Safety fallback timer ensuring app shell renders within 2s under any circumstances
     const safetyTimer = setTimeout(() => {
       console.warn(`[Startup] Safety fallback unblock triggered at ${(performance.now() - startMs).toFixed(1)}ms`);
       setLoading(false);
     }, 2000);
 
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      const authTime = (performance.now() - startMs).toFixed(1);
-      console.log(`[Startup] Auth Resolved (onAuthStateChanged): ${authTime}ms`);
-      
       clearTimeout(safetyTimer);
       setUser(firebaseUser);
-      // Immediately unblock startup and render App Shell!
       setLoading(false);
-      console.log(`[Startup] App Shell Ready (Non-blocking): ${(performance.now() - startMs).toFixed(1)}ms`);
 
       if (firebaseUser) {
         const uid = firebaseUser.uid;
         setIsJourneysLoading(true);
+        setIsSessionsLoading(true);
         setIsMemoryLoading(true);
 
-        // Background Journeys fetch (Parallel, Non-blocking)
         (async () => {
-          const t0 = performance.now();
           try {
             const journeys = await getJourneys(uid);
             setUserJourneys(journeys);
-            console.log(`[Background] Journeys Loaded: ${(performance.now() - t0).toFixed(1)}ms`);
           } catch (err) {
             console.warn("[Background] Journeys fetch error:", err.message);
           } finally {
@@ -76,13 +75,21 @@ export function AuthProvider({ children }) {
           }
         })();
 
-        // Background Memory Profile fetch (Parallel, Non-blocking)
         (async () => {
-          const t0 = performance.now();
+          try {
+            const sessions = await getAdvisorSessions(uid);
+            setUserSessions(sessions);
+          } catch (err) {
+            console.warn("[Background] Sessions fetch error:", err.message);
+          } finally {
+            setIsSessionsLoading(false);
+          }
+        })();
+
+        (async () => {
           try {
             const mem = await getUserMemory(uid);
             setUserMemory(mem);
-            console.log(`[Background] Memory Profile Loaded: ${(performance.now() - t0).toFixed(1)}ms`);
           } catch (err) {
             console.warn("[Background] Memory fetch error:", err.message);
           } finally {
@@ -91,9 +98,12 @@ export function AuthProvider({ children }) {
         })();
       } else {
         setUserJourneys([]);
+        setUserSessions([]);
         setActiveJourney(null);
+        setActiveSession(null);
         setUserMemory(null);
         setIsJourneysLoading(false);
+        setIsSessionsLoading(false);
         setIsMemoryLoading(false);
       }
     });
@@ -147,6 +157,40 @@ export function AuthProvider({ children }) {
     return journeys;
   }
 
+  async function fetchSessions() {
+    if (!user) return [];
+    const sessions = await getAdvisorSessions(user.uid);
+    setUserSessions(sessions);
+    return sessions;
+  }
+
+  async function saveSession(sessionData) {
+    if (!user) return null;
+    const saved = await saveAdvisorSession(user.uid, sessionData);
+    if (saved) {
+      setUserSessions((prev) => {
+        const filtered = prev.filter((s) => s.id !== saved.id);
+        return [saved, ...filtered];
+      });
+    }
+    return saved;
+  }
+
+  async function duplicateSession(sessionId) {
+    if (!user) return null;
+    const duplicated = await duplicateAdvisorSession(user.uid, sessionId);
+    if (duplicated) {
+      setUserSessions((prev) => [duplicated, ...prev]);
+    }
+    return duplicated;
+  }
+
+  async function removeSession(sessionId) {
+    if (!user) return;
+    await deleteAdvisorSession(user.uid, sessionId);
+    setUserSessions((prev) => prev.filter((s) => s.id !== sessionId));
+  }
+
   async function signUpEmail(email, password, name) {
     const result = await createUserWithEmailAndPassword(auth, email, password);
     if (name) {
@@ -167,6 +211,7 @@ export function AuthProvider({ children }) {
 
   async function logOut() {
     setActiveJourney(null);
+    setActiveSession(null);
     await signOut(auth);
   }
 
@@ -182,7 +227,6 @@ export function AuthProvider({ children }) {
     if (!user) throw new Error("User must be logged in to save dossiers.");
     let targetId = journeyId || activeJourney?.id;
     if (!targetId) {
-      // Auto-create journey if none active
       const newJ = await createNewJourney({
         title: `${analysis?.options?.[0]?.label || "Decision"} Exploration`,
         decisionType: "grad_school",
@@ -200,15 +244,23 @@ export function AuthProvider({ children }) {
     user,
     loading,
     isJourneysLoading,
+    isSessionsLoading,
     isMemoryLoading,
     signUpEmail,
     signInEmail,
     signInGoogle,
     logOut,
     userJourneys,
+    userSessions,
     activeJourney,
     setActiveJourney,
+    activeSession,
+    setActiveSession,
     fetchJourneys,
+    fetchSessions,
+    saveSession,
+    duplicateSession,
+    removeSession,
     createNewJourney,
     saveDossier,
     userMemory,
@@ -221,7 +273,7 @@ export function AuthProvider({ children }) {
     updateJourneyStatus: (jId, s) => updateJourneyStatus(user?.uid, jId, s),
     saveUserReflection: (jId, dId, r) => saveUserReflection(user?.uid, jId, dId, r),
     deleteJourney: (jId) => deleteJourney(user?.uid, jId)
-  }), [user, loading, isJourneysLoading, isMemoryLoading, userJourneys, activeJourney, userMemory]);
+  }), [user, loading, isJourneysLoading, isSessionsLoading, isMemoryLoading, userJourneys, userSessions, activeJourney, activeSession, userMemory]);
 
   if (loading) {
     return (

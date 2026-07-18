@@ -193,6 +193,91 @@ export async function deleteJourney(userId, journeyId) {
 }
 
 /**
+ * Session History Persistence CRUD Functions
+ * Path: users/{userId}/sessions/{sessionId}
+ */
+export async function saveAdvisorSession(userId, sessionData) {
+  if (!userId) return null;
+  try {
+    const sessionId = sessionData.id || `session_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const sessionRef = doc(db, "users", userId, "sessions", sessionId);
+    const now = Date.now();
+    const payload = {
+      id: sessionId,
+      userId,
+      title: sessionData.title || `${sessionData.decisionType === "grad_school" ? "Grad School" : sessionData.decisionType === "job" ? "Job Offer" : "Startup"} Advisor Session`,
+      decisionType: sessionData.decisionType || "grad_school",
+      createdAt: sessionData.createdAt || now,
+      updatedAt: now,
+      status: sessionData.status || (sessionData.parsed?.is_analysis ? "completed" : "in_progress"),
+      context: sessionData.context || {},
+      history: sessionData.history || [],
+      parsed: sessionData.parsed || null,
+      summary: sessionData.summary || sessionData.parsed?.analysis?.summary || "",
+      dossier: sessionData.parsed?.analysis || null
+    };
+    await setDoc(sessionRef, payload, { merge: true });
+    return payload;
+  } catch (err) {
+    console.error("[journeyService] Error saving advisor session:", err.message);
+    return null;
+  }
+}
+
+export async function getAdvisorSessions(userId) {
+  if (!userId) return [];
+  try {
+    const sessionsRef = collection(db, "users", userId, "sessions");
+    const q = query(sessionsRef, orderBy("updatedAt", "desc"));
+    const snapshot = await getDocs(q);
+    const sessions = [];
+    snapshot.forEach(docSnap => {
+      sessions.push(docSnap.data());
+    });
+    return sessions;
+  } catch (err) {
+    console.error("[journeyService] Error fetching advisor sessions:", err.message);
+    return [];
+  }
+}
+
+export async function duplicateAdvisorSession(userId, sessionId) {
+  if (!userId || !sessionId) return null;
+  try {
+    const originalRef = doc(db, "users", userId, "sessions", sessionId);
+    const docSnap = await getDoc(originalRef);
+    if (!docSnap.exists()) return null;
+    const data = docSnap.data();
+    const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const newRef = doc(db, "users", userId, "sessions", newSessionId);
+    const now = Date.now();
+    const payload = {
+      ...data,
+      id: newSessionId,
+      title: `${data.title} (Branch)`,
+      createdAt: now,
+      updatedAt: now,
+      status: "in_progress"
+    };
+    await setDoc(newRef, payload);
+    return payload;
+  } catch (err) {
+    console.error("[journeyService] Error duplicating session:", err.message);
+    return null;
+  }
+}
+
+export async function deleteAdvisorSession(userId, sessionId) {
+  if (!userId || !sessionId) return;
+  try {
+    const sessionRef = doc(db, "users", userId, "sessions", sessionId);
+    await deleteDoc(sessionRef);
+  } catch (err) {
+    console.error("[journeyService] Error deleting session:", err.message);
+  }
+}
+
+/**
  * Memory Profile CRUD Functions
  * Document path: users/{userId}/memory/profile
  */
@@ -235,3 +320,4 @@ export async function deleteUserMemory(userId) {
   const memRef = doc(db, "users", userId, "memory", "profile");
   await deleteDoc(memRef);
 }
+

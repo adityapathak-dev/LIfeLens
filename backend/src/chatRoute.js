@@ -413,27 +413,38 @@ router.post("/chat", async (req, res) => {
     if (context.memoryRiskTolerance !== undefined) knownFacts.push(`USER MEMORY — RISK TOLERANCE: ${context.memoryRiskTolerance}/5`);
   }
 
+  // Historical Sessions Context
+  if (Array.isArray(context.previousSessions) && context.previousSessions.length > 0) {
+    const sessionSummaries = context.previousSessions.slice(0, 5).map((s, idx) => {
+      const dateStr = s.updatedAt ? new Date(s.updatedAt).toISOString().split("T")[0] : "Previous";
+      return `[HISTORICAL SESSION ${idx + 1} - ${s.decisionType?.toUpperCase() || "ADVISOR"} - ${dateStr}] Title: ${s.title || "Untitled"}\nSummary/Outcome: ${s.summary || "Exploration completed"}\nTop Path Chosen: ${s.dossier?.best_suggestion?.choice || s.dossier?.options?.[0]?.label || "N/A"}`;
+    }).join("\n\n");
+    knownFacts.push(`PREVIOUS ADVISOR SESSIONS (Use to reference past choices, shifting priorities, or evolving plans naturally):\n${sessionSummaries}`);
+  }
+
   if (knownFacts.length > 0) {
     systemPrompt += `
 
 ═══════════════════════════════════════════════════════════════
-COMPLETE KNOWN-FACTS INVENTORY (assembled from intake form + memory + resume)
+COMPLETE KNOWN-FACTS INVENTORY (assembled from intake form + memory + resume + historical sessions)
 You MUST treat every item below as established fact.
 NEVER ask the user for any information already present here.
 When asking follow-up questions, explicitly reference this data to show awareness.
-For example, if exam score is known: "You reported a ${Object.values(context.examScores||{})[0] || '...'} score. Building on that, what is..." — not "Have you taken any exams?"
+If historical sessions are present, feel free to reference them naturally:
+"In your previous session regarding X, you prioritized Y. Comparing that to your current position..."
 ═══════════════════════════════════════════════════════════════
 
 ${knownFacts.map((f, i) => `[KNOWN-FACT ${i+1}] ${f}`).join("\n\n")}
 
 ═══════════════════════════════════════════════════════════════
-INTELLIGENT QUESTIONING RULES:
+INTELLIGENT QUESTIONING & CONTINUITY RULES:
 1. Read every KNOWN-FACT above before deciding what to ask.
 2. Only ask about information genuinely missing from the KNOWN-FACTS inventory.
 3. Every question must reference at least one known fact to demonstrate awareness.
 4. Your first response must begin with a synthesis paragraph summarizing everything you already know about this user — NOT a generic greeting.
-5. Responses must be substantial (minimum 150 words for questions, 400+ words for final analysis).
-6. Think and respond like a senior expert consultant, not a chatbot.
+5. If user has previous sessions, acknowledge their evolving decision history.
+6. Responses must be substantial (minimum 150 words for questions, 1200+ words for final analysis dossier).
+7. Think and respond like a senior expert consultant, strategist, and mentor — NOT a generic chatbot.
 ═══════════════════════════════════════════════════════════════
 `;
   }
