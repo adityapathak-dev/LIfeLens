@@ -3678,7 +3678,37 @@ body { margin: 0; overflow-x: hidden; }
 .guidance-tabs {
   display: flex;
   border-bottom: 1px solid var(--line);
-  background: var(--surface-2);
+  background: var(--bg-1);
+}
+
+.guidance-tabs .tab-btn {
+  flex: 1;
+  background: var(--bg-2);
+  border: none;
+  border-right: 1px solid var(--line);
+  color: var(--text-2);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 12px 18px;
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+  text-align: center;
+}
+
+.guidance-tabs .tab-btn:last-child {
+  border-right: none;
+}
+
+.guidance-tabs .tab-btn:hover {
+  background: var(--bg-3);
+  color: var(--text);
+}
+
+.guidance-tabs .tab-btn.active {
+  background: var(--accent);
+  color: var(--accent-dark);
+  font-weight: 700;
 }
 
 .guidance-filter-bar {
@@ -3692,6 +3722,62 @@ body { margin: 0; overflow-x: hidden; }
 }
 .filter-group { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-2); }
 .filter-group.flex-1 { flex: 1; min-width: 200px; }
+
+/* Custom select dropdown controls */
+select,
+.select-sm,
+select.select-sm {
+  background-color: var(--bg-2);
+  border: 1px solid var(--line-2);
+  color: var(--text);
+  border-radius: var(--r-s);
+  padding: 8px 12px;
+  font-size: 13px;
+  font-family: var(--font-body);
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+}
+
+select:focus,
+.select-sm:focus,
+select.select-sm:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+select option,
+.select-sm option,
+select.select-sm option {
+  background-color: var(--bg-1);
+  color: var(--text);
+}
+
+/* Secondary & filter action buttons */
+.btn-secondary,
+.btn-secondary.btn-sm {
+  background: var(--bg-3);
+  border: 1px solid var(--line-2);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: var(--r-s);
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-secondary:hover,
+.btn-secondary.btn-sm:hover {
+  background: var(--accent);
+  color: var(--accent-dark);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
 
 .guidance-content { padding: 20px; overflow-y: auto; flex: 1; }
 .guidance-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
@@ -4147,6 +4233,84 @@ input[type="range"]::-webkit-slider-thumb:hover {
   background: #f3ebd9;
   color: #100904;
   border: 1px solid rgba(36, 22, 10, 0.22);
+}
+
+/* ── Light Mode Select & Button Overrides ── */
+[data-theme="light"] select,
+[data-theme="light"] .select-sm,
+[data-theme="light"] select.select-sm {
+  background-color: #ffffff;
+  border: 1px solid rgba(36, 22, 10, 0.28);
+  color: #100904;
+}
+
+[data-theme="light"] select option,
+[data-theme="light"] .select-sm option,
+[data-theme="light"] select.select-sm option {
+  background-color: #ffffff;
+  color: #100904;
+}
+
+[data-theme="light"] .btn-secondary,
+[data-theme="light"] .btn-secondary.btn-sm {
+  background: #e5d5be;
+  border: 1px solid rgba(36, 22, 10, 0.28);
+  color: #100904;
+  font-weight: 700;
+}
+
+[data-theme="light"] .btn-secondary:hover,
+[data-theme="light"] .btn-secondary.btn-sm:hover {
+  background: #8c501e;
+  color: #ffffff !important;
+  border-color: #8c501e;
+}
+
+/* ── Light Mode Human Guidance Modal ── */
+[data-theme="light"] .guidance-overlay {
+  background: rgba(26, 14, 6, 0.55);
+  backdrop-filter: blur(12px);
+}
+
+[data-theme="light"] .guidance-modal {
+  background: #ffffff;
+  border-color: rgba(36, 22, 10, 0.22);
+}
+
+[data-theme="light"] .guidance-header {
+  background: #f3ebd9;
+  border-bottom-color: rgba(36, 22, 10, 0.18);
+}
+
+[data-theme="light"] .guidance-filter-bar {
+  background: #f5ede0;
+  border-bottom-color: rgba(36, 22, 10, 0.18);
+}
+
+[data-theme="light"] .guidance-tabs {
+  background: #f3ebd9;
+  border-bottom-color: rgba(36, 22, 10, 0.18);
+}
+
+[data-theme="light"] .guidance-tabs .tab-btn {
+  background: #f3ebd9;
+  border-color: rgba(36, 22, 10, 0.18);
+  color: #3d2412;
+}
+
+[data-theme="light"] .guidance-tabs .tab-btn:hover {
+  background: #e5d5be;
+  color: #100904;
+}
+
+[data-theme="light"] .guidance-tabs .tab-btn.active {
+  background: #8c501e;
+  color: #ffffff !important;
+}
+
+[data-theme="light"] .guidance-card {
+  background: #f3ebd9;
+  border-color: rgba(36, 22, 10, 0.18);
 }
 
 [data-theme="light"] .session-history-modal {
