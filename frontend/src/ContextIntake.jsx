@@ -67,7 +67,7 @@ function countFilled(form, keys) {
 
 /* ── Main component ───────────────────────────────────────────── */
 
-export default function ContextIntake({ decisionType, onSubmit, onBack, initialTab = "advisor" }) {
+export default function ContextIntake({ decisionType, onSubmit, onBack, onHome, initialTab = "advisor" }) {
   const { userMemory } = useAuth();
   const [form, setForm] = useState({});
   const [activeTab, setActiveTab] = useState(initialTab || "advisor");

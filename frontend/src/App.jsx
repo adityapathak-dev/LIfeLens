@@ -139,7 +139,7 @@ function AppMain({ user, logOut }) {
         onGoHome={handleReset}
       />
       <main className="app-shell">
-        <div key={transitionKey} className="phase-enter" style={{ display: "contents" }}>
+        <div key={transitionKey} className="phase-enter" style={{ width: "100%" }}>
           <Suspense fallback={<div style={{ padding: "40px", textAlign: "center", color: "var(--text-2)" }}>Loading view...</div>}>
             {phase === "select" && (
               <DecisionSelector onSelect={handleSelect} />
