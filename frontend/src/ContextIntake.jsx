@@ -126,16 +126,23 @@ export default function ContextIntake({ decisionType, onSubmit, onBack, initialT
   const pct = keys.length > 0 ? Math.round((filled / keys.length) * 100) : 0;
 
   const backLabel = decisionType === "job"
-    ? "← Back to Job Options"
+    ? "← Back to Human Advisors"
     : decisionType === "startup"
     ? "← Back to Startup Options"
     : "← Change decision type";
 
   return (
     <div className="intake-wrap">
-      <button className="back-btn" type="button" onClick={onBack}>
-        {backLabel}
-      </button>
+      <div className="intake-nav-bar" style={{ display: "flex", gap: "10px", marginBottom: "16px", flexWrap: "wrap" }}>
+        <button className="back-btn" type="button" onClick={onBack}>
+          {backLabel}
+        </button>
+        {onHome && (
+          <button className="back-btn" type="button" onClick={onHome}>
+            🏠 Back to Main Menu
+          </button>
+        )}
+      </div>
 
       {/* SECTION B Views */}
       {decisionType === "job" && activeTab === "ats" && (

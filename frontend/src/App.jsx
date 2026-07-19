@@ -159,6 +159,7 @@ function AppMain({ user, logOut }) {
                   else if (decisionType === "job") setPhase("job_mode");
                   else handleReset();
                 }}
+                onHome={handleReset}
                 initialTab={context?.initialTab || "advisor"}
               />
             )}

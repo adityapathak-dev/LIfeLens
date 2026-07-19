@@ -4,11 +4,11 @@ export default function JobModeSelector({ onSelect, onBack }) {
   return (
     <div className="intake-wrap">
       <button className="back-btn" type="button" onClick={onBack}>
-        ← Change decision type
+        🏠 Back to Main Menu
       </button>
 
       <div className="startup-mode-header">
-        <p className="intake-eyebrow">Job & Career Move</p>
+        <p className="intake-eyebrow">Human Advisors</p>
         <h2 className="intake-title">Select your path</h2>
         <p className="intake-hint">Choose between comprehensive decision evaluation or instant ATS resume analysis.</p>
       </div>
