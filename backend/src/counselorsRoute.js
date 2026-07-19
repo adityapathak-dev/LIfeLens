@@ -13,12 +13,14 @@ const router = Router();
 router.get("/human-guidance", (req, res) => {
   try {
     const { domain = "grad_school", country = "default", query = "" } = req.query;
-    const list = getHumanGuidanceDirectory(domain, country, query);
+    const result = getHumanGuidanceDirectory(domain, country, query);
     return res.json({
       ok: true,
       domain,
       country,
-      guidance_resources: list,
+      is_exact_match: result.is_exact_match,
+      message: result.message,
+      guidance_resources: result.resources,
       disclaimer: "🛡️ Human advisors provide external guidance and mentorship. AI assessments and advisor guidance do not constitute binding guarantees or replace formal institutional, legal, or financial decisions."
     });
   } catch (err) {
@@ -30,13 +32,15 @@ router.get("/human-guidance", (req, res) => {
 router.get("/counselors", (req, res) => {
   try {
     const { domain = "grad_school", country = "default", query = "" } = req.query;
-    const list = getHumanGuidanceDirectory(domain, country, query);
+    const result = getHumanGuidanceDirectory(domain, country, query);
     return res.json({
       ok: true,
       domain,
       country,
-      guidance_resources: list,
-      counselor: list[0],
+      is_exact_match: result.is_exact_match,
+      message: result.message,
+      guidance_resources: result.resources,
+      counselor: result.resources[0],
       disclaimer: "🛡️ Human advisors provide external guidance and mentorship. AI assessments and advisor guidance do not replace formal professional advice."
     });
   } catch (err) {

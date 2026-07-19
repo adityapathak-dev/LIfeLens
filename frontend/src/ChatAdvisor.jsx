@@ -905,6 +905,125 @@ function AnalysisBlock({ analysis, decisionType }) {
         </div>
       )}
 
+      {/* ── Reachable Alternative Opportunities (Realistic Non-Fantasy Roles) ── */}
+      {analysis.reachable_alternative_opportunities?.length > 0 && (
+        <div className="analysis-section glass-card">
+          <h4 className="dossier-section-header">💼 Reachable Alternative Opportunities (Immediately Competitive)</h4>
+          <p className="dossier-hint">
+            Based on your actual skills and experience profile, you are already qualified for these realistic role alternatives:
+          </p>
+          <div className="analysis-job-matches__list">
+            {analysis.reachable_alternative_opportunities.map((alt, i) => (
+              <div key={i} className="analysis-job-card analysis-job-card--now">
+                <div className="analysis-job-card__header">
+                  <div>
+                    <span className="analysis-job-card__title">{alt.job_title}</span>
+                    <span style={{
+                      marginLeft: "8px",
+                      fontSize: "11px",
+                      fontWeight: "700",
+                      padding: "2px 8px",
+                      borderRadius: "10px",
+                      background: alt.difficulty_level === "Ready Now" ? "rgba(16, 185, 129, 0.2)" : "rgba(245, 158, 11, 0.2)",
+                      color: alt.difficulty_level === "Ready Now" ? "#34d399" : "#fbbf24"
+                    }}>
+                      ⚡ {alt.difficulty_level || "Ready Now"}
+                    </span>
+                  </div>
+                  {alt.estimated_salary_range && (
+                    <div className="analysis-salary-badge">💰 {alt.estimated_salary_range}</div>
+                  )}
+                </div>
+                <p className="analysis-job-card__reason"><strong>Why You Qualify:</strong> {alt.why_user_qualifies}</p>
+                {alt.missing_skills?.length > 0 && (
+                  <div className="analysis-job-card__skills-gap">
+                    <span className="analysis-job-card__skills-label">Skills to Polish:</span>
+                    {alt.missing_skills.map((s, k) => (
+                      <span key={k} className="analysis-job-card__skill-tag">{s}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Skill Gap & Salary Boost Guidance ── */}
+      {analysis.skill_gap_guidance?.length > 0 && (
+        <div className="analysis-section glass-card">
+          <h4 className="dossier-section-header">📈 Skill Gap & Salary Boost Guidance</h4>
+          <p className="dossier-hint">
+            Specific skill additions that unlock higher-value roles and salary tiers:
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "12px" }}>
+            {analysis.skill_gap_guidance.map((sg, i) => (
+              <div key={i} style={{ background: "var(--bg-2)", border: "1px solid var(--line-2)", borderRadius: "var(--r-m)", padding: "14px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                  <span style={{ fontWeight: "700", color: "var(--text)" }}>
+                    {sg.current_role} ➔ <span style={{ color: "var(--accent)" }}>{sg.target_role}</span>
+                  </span>
+                  {sg.estimated_salary_increase_pct && (
+                    <span style={{ background: "rgba(16, 185, 129, 0.15)", color: "#34d399", fontWeight: "700", fontSize: "12px", padding: "2px 8px", borderRadius: "10px" }}>
+                      + {sg.estimated_salary_increase_pct} Salary Boost
+                    </span>
+                  )}
+                </div>
+                {sg.skills_to_learn?.length > 0 && (
+                  <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", margin: "6px 0" }}>
+                    <span style={{ fontSize: "12px", color: "var(--text-3)" }}>Skills to learn:</span>
+                    {sg.skills_to_learn.map((sk, k) => (
+                      <span key={k} className="analysis-job-card__skill-tag">{sk}</span>
+                    ))}
+                  </div>
+                )}
+                {sg.rationale && <p style={{ margin: "4px 0 0", fontSize: "12px", color: "var(--text-2)" }}>{sg.rationale}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Realistic Career Path Projection ── */}
+      {analysis.career_path_projection && (
+        <div className="analysis-section glass-card">
+          <h4 className="dossier-section-header">🗺️ Realistic Career Path Projection</h4>
+          <div className="horizon-timeline" style={{ marginTop: "12px" }}>
+            {Array.isArray(analysis.career_path_projection) ? (
+              analysis.career_path_projection.map((step, i) => (
+                <div key={i} className="timeline-node">
+                  <span className="node-year">{step.stage || `Stage ${i + 1}`} ({step.timeline || ""})</span>
+                  <strong style={{ color: "var(--text)", display: "block", marginBottom: "4px" }}>{step.title}</strong>
+                  <p style={{ margin: 0, fontSize: "12px", color: "var(--text-2)" }}>{step.description}</p>
+                </div>
+              ))
+            ) : (
+              <>
+                <div className="timeline-node">
+                  <span className="node-year">Current Baseline</span>
+                  <strong style={{ color: "var(--text)", display: "block" }}>{analysis.career_path_projection.current_position || "Current Position"}</strong>
+                </div>
+                <div className="timeline-node">
+                  <span className="node-year">Next Realistic Step</span>
+                  <strong style={{ color: "var(--text)", display: "block" }}>{analysis.career_path_projection.next_realistic_step || "1–2 Years"}</strong>
+                </div>
+                <div className="timeline-node">
+                  <span className="node-year">Stronger Future Step</span>
+                  <strong style={{ color: "var(--text)", display: "block" }}>{analysis.career_path_projection.stronger_future_step || "3–5 Years"}</strong>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Job Discovery & Transparency Notice ── */}
+      {analysis.job_discovery_notice && (
+        <div style={{ background: "rgba(59, 130, 246, 0.08)", border: "1px solid rgba(59, 130, 246, 0.2)", borderRadius: "var(--r-m)", padding: "10px 14px", fontSize: "12px", color: "#60a5fa", marginTop: "12px" }}>
+          ℹ️ <strong>Job Discovery Transparency:</strong> {analysis.job_discovery_notice}
+        </div>
+      )}
+
       {analysis.investors?.length > 0 && (
         <div className="analysis-investors">
           <h4 className="analysis-investors__title">🤝 Relevant Investors & Startup Funders</h4>

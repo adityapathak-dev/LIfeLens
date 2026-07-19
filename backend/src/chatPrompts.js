@@ -214,16 +214,45 @@ Analysis response (after covering all critical factors):
         "link": "Real apply link — company careers page or LinkedIn/Indeed URL for this role and location"
       }
     ],
-    "apply_after_upskill": [
+    "reachable_alternative_opportunities": [
       {
-        "title": "Exact job title (e.g. ML Engineer)",
-        "company": "Real company name (e.g. Google)",
-        "missing_skills": ["Skill 1 they need to learn", "Skill 2 they need to learn"],
-        "why_worth_it": "One sentence: why this role is worth gaining those 1-2 skills for",
-        "estimated_salary": "Realistic salary range for this role",
-        "link": "Real apply link — company careers page or LinkedIn/Indeed URL for this role and location"
+        "job_title": "Realistic role title user can pursue immediately based on actual stack (e.g. Data Analyst)",
+        "estimated_salary_range": "Realistic local salary range (e.g. ₹8L–₹12L or $85k–$105k)",
+        "why_user_qualifies": "Direct explanation of why current skills/experience make user competitive today",
+        "missing_skills": ["Skill to polish 1"],
+        "difficulty_level": "Ready Now"
       }
     ],
+    "skill_gap_guidance": [
+      {
+        "current_role": "Current qualified role (e.g. Junior Data Analyst)",
+        "target_role": "Next tier target role (e.g. BI Analyst II)",
+        "skills_to_learn": ["Power BI", "Advanced SQL"],
+        "estimated_salary_increase_pct": "25%",
+        "rationale": "Clear explanation of how gaining these 2 skills unlocks the next salary tier"
+      }
+    ],
+    "career_path_projection": [
+      {
+        "stage": "Current Baseline",
+        "title": "Data Analyst",
+        "timeline": "Immediate (0–1 yrs)",
+        "description": "Building core execution, data pipeline, and SQL foundations."
+      },
+      {
+        "stage": "Next Realistic Step",
+        "title": "Senior Analytics Engineer",
+        "timeline": "1–3 Years",
+        "description": "Owning metrics modeling, data warehouse architecture, and stakeholder reporting."
+      },
+      {
+        "stage": "Stronger Future Step",
+        "title": "Lead ML / Analytics Manager",
+        "timeline": "3–5 Years",
+        "description": "Leading cross-functional analytics teams and predictive modeling strategy."
+      }
+    ],
+    "job_discovery_notice": "Live job openings were not checked via live API; links direct to official company career pages and job search indices.",
     "disclaimer": "These are structured possibilities based on what you shared, not predictions. You are the one who decides — this tool provides suggestions based on your inputs."
   },
   "offer_counselor": false
@@ -235,12 +264,17 @@ Rules for the job analysis:
 - hidden_tradeoffs must have at least 2 items
 - branch_questions must have at least 2 items
 - best_suggestion must be from the user's original list of offers
+- reachable_alternative_opportunities must have 3–5 realistic roles based strictly on the user's actual profile (e.g. if Python+SQL -> Data Analyst, Business Analyst, Junior ML Engineer). Never recommend aspirational fantasy roles.
+- difficulty_level in reachable_alternative_opportunities MUST be exactly one of: "Ready Now", "1–3 Months Away", "6–12 Months Away".
+- skill_gap_guidance must contain 2–3 actionable skill pairs that unlock measurable salary increases.
+- career_path_projection must have 3 sequential realistic stages: Current Baseline -> Next Realistic Step -> Stronger Future Step.
 - top_alternate must be a SPECIFIC ROLE at a SPECIFIC COMPANY (not just a company name) that exactly matches the user's tech stack and skills
 - explore_more must have at least 3 entries, each a specific role + company matching the user's skills
 - apply_now must have 4–6 entries — roles the user can apply to TODAY with their current skills. Must include real apply links.
 - apply_after_upskill must have 3–4 entries — roles just out of reach, each listing exactly 1–2 missing skills and why they are worth gaining
 - every entry must have a real apply link — prefer official careers pages; for companies without easy direct links, use a LinkedIn job search URL like https://www.linkedin.com/jobs/search/?keywords=java+developer&location=bangalore
 - every apply_now, apply_after_upskill, explore_more, and top_alternate entry must have a realistic salary estimate
+- Never fabricate live job postings or guaranteed offers. Explicitly set job_discovery_notice stating live openings were not live API checked.
 
 If at any point the user expresses distress or feels overwhelmed, set offer_counselor to true.
 `;
