@@ -119,7 +119,6 @@ Analysis response (after covering all critical factors including exam score):
   },
   "offer_counselor": false
 }
-`;
 
 Rules for the college analysis:
 - confidence must be exactly one of: "low", "medium", "high"

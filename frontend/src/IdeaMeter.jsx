@@ -73,7 +73,7 @@ function ConfettiBurst() {
 function ScoreRing({ score, color, strokeColor }) {
   const ringRef = useRef(null);
   const circumference = 251.2; // 2π × 40 ≈ 251.2
-  const offset = circumference - (score / 10) * circumference;
+  const offset = circumference - (score / 100) * circumference;
 
   useEffect(() => {
     // Trigger the animation after a tiny delay so the transition fires
@@ -333,7 +333,9 @@ export default function IdeaMeter({ onReset, onBack }) {
                 <p className="idea-result__verdict-label" style={{ color: cfg.color }}>
                   {cfg.label}
                 </p>
-                <p className="idea-result__score-label">{result.score_label}</p>
+                <p className="idea-result__score-label">
+                  {result.grade ? `Grade: ${result.grade}` : `Score: ${result.score}/100`}
+                </p>
               </div>
             </div>
 
@@ -351,33 +353,62 @@ export default function IdeaMeter({ onReset, onBack }) {
           {/* One-liner */}
           {result.one_liner && (
             <blockquote className="idea-result__one-liner">
-              "{result.one_liner}"
+              &ldquo;{result.one_liner}&rdquo;
             </blockquote>
           )}
 
-          {/* Two-column: What works / What doesn't */}
+          {/* Two-column: Strengths / Weaknesses */}
           <div className="idea-result__two-col">
-            {result.what_works?.length > 0 && (
+            {(result.strengths?.length > 0 || result.what_works?.length > 0) && (
               <div className="idea-result__col idea-result__col--green">
                 <h3 className="idea-result__col-title">✅ What works</h3>
                 <ul>
-                  {result.what_works.map((item, i) => (
+                  {(result.strengths || result.what_works || []).map((item, i) => (
                     <li key={i}>{item}</li>
                   ))}
                 </ul>
               </div>
             )}
-            {result.what_doesnt?.length > 0 && (
+            {(result.weaknesses?.length > 0 || result.what_doesnt?.length > 0) && (
               <div className="idea-result__col idea-result__col--red">
                 <h3 className="idea-result__col-title">❌ What doesn't</h3>
                 <ul>
-                  {result.what_doesnt.map((item, i) => (
+                  {(result.weaknesses || result.what_doesnt || []).map((item, i) => (
                     <li key={i}>{item}</li>
                   ))}
                 </ul>
               </div>
             )}
           </div>
+
+          {/* Breakdown scores */}
+          {result.scores_breakdown && (
+            <div className="idea-result__breakdown">
+              <h3 className="idea-result__breakdown-title">📊 Score Breakdown</h3>
+              <div className="idea-result__breakdown-grid">
+                {Object.entries(result.scores_breakdown).map(([key, val]) => (
+                  <div key={key} className="idea-result__breakdown-item">
+                    <span className="idea-result__breakdown-label">
+                      {key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}
+                    </span>
+                    <div className="idea-result__breakdown-bar-wrap">
+                      <div
+                        className="idea-result__breakdown-bar"
+                        style={{
+                          width: `${val}%`,
+                          background: val >= 70 ? "#10b981" : val >= 50 ? "#f59e0b" : "#ef4444"
+                        }}
+                      />
+                      <span className="idea-result__breakdown-val">{val}</span>
+                    </div>
+                    {result.comments?.[key] && (
+                      <p className="idea-result__breakdown-comment">{result.comments[key]}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Biggest threat */}
           {result.biggest_threat && (
